@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import UserList from '../components/chat/UserList.vue'
 import MessageList from '../components/chat/MessageList.vue'
 import MessageInput from '../components/chat/MessageInput.vue'
@@ -62,13 +62,43 @@ const selectUser = async (user: any) => {
   }
 }
 
+// 处理WebSocket错误消息
+const handleWebSocketError = (event: CustomEvent) => {
+  const errorData = event.detail;
+  console.error('WebSocket错误:', errorData);
+  
+  // 查找最后发送的消息并标记为错误
+  const messages = chatStore.messages;
+  if (messages.length > 0) {
+    // 找到最后一条由当前用户发送的消息
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message.sender === 'me' && !message.error) {
+        // 更新消息状态为错误
+        const updatedMessages = [...messages];
+        updatedMessages[i] = {
+          ...message,
+          error: true,
+          errorMessage: errorData.message
+        };
+        chatStore.messages = updatedMessages;
+        break;
+      }
+    }
+  }
+  
+  // 显示错误通知给用户
+  console.error(`消息发送失败: ${errorData.message}`);
+};
+
 const handleSendMessage = async (messageText: string) => {
   if (messageText.trim() && chatStore.selectedUser && chatStore.currentUser) {
     // 创建消息对象
     const messageToSend = {
-      type: 'message',
+      type: 'TEXT',
       content: messageText,
-      to: chatStore.selectedUser.id
+      receiverId: chatStore.selectedUser.id,
+      senderId: chatStore.currentUser.id
     }
     
     // 先通过WebSocket发送消息（实时显示）
@@ -83,18 +113,6 @@ const handleSendMessage = async (messageText: string) => {
       userId: chatStore.currentUser.id
     }
     chatStore.addMessage(newMessage)
-    
-    // 同时发送到后端API保存
-    try {
-      await chatStore.sendNewMessage({
-        senderId: parseInt(chatStore.currentUser.id),
-        receiverId: parseInt(chatStore.selectedUser.id),
-        content: messageText,
-        type: 'TEXT'
-      })
-    } catch (error) {
-      console.error('保存消息到后端失败:', error)
-    }
   }
 }
 
@@ -107,6 +125,14 @@ onMounted(async () => {
   
   // 初始化WebSocket连接
   websocketService.connect()
+  
+  // 添加错误事件监听器
+  window.addEventListener('websocketError', handleWebSocketError as EventListener);
+})
+
+onUnmounted(() => {
+  // 移除错误事件监听器
+  window.removeEventListener('websocketError', handleWebSocketError as EventListener);
 })
 </script>
 

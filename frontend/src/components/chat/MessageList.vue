@@ -10,11 +10,13 @@
         <span class="sender-name">{{ message.senderName || '用户' }}</span>
         <span class="message-time">{{ formatTime(message.timestamp) }}</span>
       </div>
-      <div :class="['message-content', message.sender === 'me' ? 'sent' : 'received']">
+      <div :class="['message-content', message.sender === 'me' ? 'sent' : 'received', { 'error': message.error }]">
         {{ message.text }}
       </div>
+      <span v-if="message.error && message.sender === 'me'" class="error-indicator" title="消息发送失败">!</span>
       <div class="message-footer" v-if="message.sender === 'me'">
         <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+        <span v-if="message.error" class="error-status">发送失败</span>
       </div>
     </div>
   </div>
@@ -29,6 +31,8 @@ interface Message {
   sender: 'me' | 'other'
   senderName?: string
   timestamp: Date
+  error?: boolean
+  errorMessage?: string
 }
 
 const props = defineProps<{ messages: Message[] }>()
@@ -96,10 +100,12 @@ watch(() => props.messages, () => {
 
 .sent-message {
   align-items: flex-end;
+  position: relative;
 }
 
 .received-message {
   align-items: flex-start;
+  position: relative;
 }
 
 .message-header {

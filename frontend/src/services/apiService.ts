@@ -18,6 +18,8 @@ export interface Message {
   sender: 'me' | 'other'
   timestamp: Date
   userId: string
+  error?: boolean
+  errorMessage?: string
 }
 
 // 用户相关API
