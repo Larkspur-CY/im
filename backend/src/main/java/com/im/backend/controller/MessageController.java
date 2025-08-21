@@ -41,6 +41,14 @@ public class MessageController {
         long count = messageService.getUnreadMessageCount(userId);
         return ResponseEntity.ok(count);
     }
+    
+    @GetMapping("/unread/count/{senderId}/{receiverId}")
+    public ResponseEntity<Long> getUnreadMessageCountBetweenUsers(
+            @PathVariable Long senderId, 
+            @PathVariable Long receiverId) {
+        long count = messageService.getUnreadMessageCountBetweenUsers(senderId, receiverId);
+        return ResponseEntity.ok(count);
+    }
 
     @PutMapping("/read/{messageId}")
     public ResponseEntity<Void> markMessageAsRead(@PathVariable Long messageId) {

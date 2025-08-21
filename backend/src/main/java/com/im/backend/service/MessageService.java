@@ -54,6 +54,10 @@ public class MessageService {
         return messageRepository.countByReceiverIdAndIsReadFalse(userId);
     }
 
+    public long getUnreadMessageCountBetweenUsers(Long senderId, Long receiverId) {
+        return messageRepository.countBySenderIdAndReceiverIdAndIsReadFalse(senderId, receiverId);
+    }
+
     public boolean deleteMessage(Long messageId) {
         if (messageRepository.existsById(messageId)) {
             messageRepository.deleteById(messageId);

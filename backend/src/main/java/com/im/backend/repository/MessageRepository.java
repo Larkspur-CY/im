@@ -19,6 +19,8 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     
     long countByReceiverIdAndIsReadFalse(Long receiverId);
     
+    long countBySenderIdAndReceiverIdAndIsReadFalse(Long senderId, Long receiverId);
+    
     @Query("SELECT m FROM Message m WHERE (m.senderId = :senderId AND m.receiverId = :receiverId) OR (m.senderId = :receiverId AND m.receiverId = :senderId) ORDER BY m.sentTime ASC")
     List<Message> findMessagesBetweenUsers(@Param("senderId") Long senderId, @Param("receiverId") Long receiverId);
 }

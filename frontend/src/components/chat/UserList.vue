@@ -1,6 +1,6 @@
 <template>
   <div class="user-list">
-    <h3>在线用户</h3>
+    <h3>用户列表</h3>
     <ul>
       <li 
         v-for="user in users" 
@@ -12,7 +12,11 @@
           {{ (user.nickname || user.username)?.charAt(0).toUpperCase() }}
         </div>
         <div class="user-info">
-          <div class="user-name">{{ user.nickname || user.username }}</div>
+          <div class="user-name">{{ user.nickname || user.username }}
+            <span v-if="user.unreadCount && user.unreadCount > 0" class="unread-count">
+              {{ user.unreadCount }}
+            </span>
+          </div>
           <div class="user-status">
             <span 
               class="status-indicator" 
@@ -36,6 +40,7 @@ interface User {
   nickname?: string
   status?: 'online' | 'offline' | 'away'
   isOnline?: boolean
+  unreadCount?: number
 }
 </script>
 
@@ -124,5 +129,18 @@ interface User {
 .status-text {
   font-size: 12px;
   color: #666;
+}
+
+.unread-count {
+  background-color: #ff4757;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  margin-left: 8px;
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1;
 }
 </style>

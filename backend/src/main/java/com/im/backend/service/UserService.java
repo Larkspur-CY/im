@@ -2,6 +2,8 @@ package com.im.backend.service;
 
 import com.im.backend.model.User;
 import com.im.backend.repository.UserRepository;
+import com.im.backend.service.MessageService;
+import com.im.backend.dto.UserWithUnreadCountDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -9,17 +11,29 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private MessageService messageService;
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+    
+    public List<UserWithUnreadCountDTO> getAllUsersWithUnreadCount(Long currentUserId) {
+        List<User> users = userRepository.findAll();
+        return users.stream().map(user -> {
+            Long unreadCount = messageService.getUnreadMessageCountBetweenUsers(user.getId(), currentUserId);
+            return new UserWithUnreadCountDTO(user, unreadCount);
+        }).collect(Collectors.toList());
     }
 
     public User getUserById(Long id) {

@@ -11,6 +11,15 @@ const apiClient = axios.create({
   },
 })
 
+// 定义消息类型
+export interface Message {
+  id: string
+  text: string
+  sender: 'me' | 'other'
+  timestamp: Date
+  userId: string
+}
+
 // 用户相关API
 export const userApi = {
   // 获取所有用户
@@ -27,6 +36,9 @@ export const userApi = {
   
   // 获取在线用户
   getOnlineUsers: () => apiClient.get('/users/online'),
+  
+  // 获取带未读数量的用户列表
+  getWithUnreadCount: (userId: string) => apiClient.get(`/users/with-unread-count/${userId}`),
 }
 
 // 消息相关API
@@ -43,6 +55,10 @@ export const messageApi = {
   
   // 获取未读消息数量
   getUnreadMessageCount: (userId: string) => apiClient.get(`/messages/unread/count/${userId}`),
+  
+  // 获取特定用户之间的未读消息数量
+  getUnreadMessageCountBetweenUsers: (senderId: string, receiverId: string) => 
+    apiClient.get(`/messages/unread/count/${senderId}/${receiverId}`),
   
   // 标记消息已读
   markMessageAsRead: (messageId: string) => apiClient.put(`/messages/read/${messageId}`),

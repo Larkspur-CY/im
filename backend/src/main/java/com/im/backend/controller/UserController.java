@@ -1,5 +1,6 @@
 package com.im.backend.controller;
 
+import com.im.backend.dto.UserWithUnreadCountDTO;
 import com.im.backend.model.User;
 import com.im.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,12 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @GetMapping("/with-unread-count/{currentUserId}")
+    public ResponseEntity<List<UserWithUnreadCountDTO>> getAllUsersWithUnreadCount(@PathVariable Long currentUserId) {
+        List<UserWithUnreadCountDTO> usersWithUnreadCount = userService.getAllUsersWithUnreadCount(currentUserId);
+        return ResponseEntity.ok(usersWithUnreadCount);
     }
 
     @GetMapping("/{id}")

@@ -25,7 +25,8 @@ import MessageList from '../components/chat/MessageList.vue'
 import MessageInput from '../components/chat/MessageInput.vue'
 import { useChatStore } from '../store/chatStore'
 import { websocketService } from '../services/websocketService'
-import type { Message } from '../store/chatStore'
+import { messageApi } from '../services/apiService'
+import type { Message } from '../services/apiService'
 import '../assets/chat.css'
 
 const chatStore = useChatStore()
@@ -40,9 +41,24 @@ const mockCurrentUser = {
 const selectUser = async (user: any) => {
   chatStore.setSelectedUser(user)
   
-  // 获取两个用户之间的消息历史
+  // 标记所有消息为已读
   if (chatStore.currentUser) {
+    try {
+      await messageApi.markAllMessagesAsRead(user.id, chatStore.currentUser.id);
+    } catch (error) {
+      console.error('标记消息为已读失败:', error);
+    }
+    
+    // 获取两个用户之间的消息历史
     await chatStore.fetchMessagesBetweenUsers(chatStore.currentUser.id, user.id)
+  }
+  
+  // 重置该用户的未读消息数量
+  const userIndex = chatStore.users.findIndex(u => u.id === user.id);
+  if (userIndex !== -1) {
+    const updatedUsers = [...chatStore.users];
+    updatedUsers[userIndex].unreadCount = 0;
+    chatStore.users = updatedUsers;
   }
 }
 
@@ -86,8 +102,8 @@ onMounted(async () => {
   // 设置当前用户
   chatStore.setCurrentUser(mockCurrentUser)
   
-  // 获取用户列表
-  await chatStore.fetchUsers()
+  // 获取用户列表（带未读消息数量）
+  await chatStore.fetchUsers(mockCurrentUser.id)
   
   // 初始化WebSocket连接
   websocketService.connect()
