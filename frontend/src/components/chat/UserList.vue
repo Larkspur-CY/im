@@ -14,8 +14,11 @@
         <div class="user-info">
           <div class="user-name">{{ user.nickname || user.username }}</div>
           <div class="user-status">
-            <span class="status-indicator online"></span>
-            <span class="status-text">在线</span>
+            <span 
+              class="status-indicator" 
+              :class="{ online: user.isOnline, offline: !user.isOnline }"
+            ></span>
+            <span class="status-text">{{ user.isOnline ? '在线' : '离线' }}</span>
           </div>
         </div>
       </li>
@@ -32,6 +35,7 @@ interface User {
   username: string
   nickname?: string
   status?: 'online' | 'offline' | 'away'
+  isOnline?: boolean
 }
 </script>
 
@@ -111,6 +115,10 @@ interface User {
 
 .status-indicator.online {
   background-color: #4caf50;
+}
+
+.status-indicator.offline {
+  background-color: #9e9e9e;
 }
 
 .status-text {
