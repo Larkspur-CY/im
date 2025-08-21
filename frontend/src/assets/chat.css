@@ -1,8 +1,13 @@
 .chat-container {
   display: flex;
   flex-direction: row;
-  height: 100vh;
+  width: 90%;
+  height: 90vh;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  margin: 5vh auto;
+  border-radius: 20px;
+  overflow: visible;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 /* 深色模式支持 */
@@ -19,7 +24,7 @@
   padding: 20px;
   box-sizing: border-box;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
 }
 
@@ -112,7 +117,7 @@
   display: flex;
   flex-direction: column;
   background-color: #fff;
-  height: 100vh;
+  height: 100%;
 }
 
 .chat-header {
