@@ -15,7 +15,7 @@ interface User {
 }
 
 // 定义消息类型
-interface Message {
+export interface Message {
   id: string
   text: string
   sender: 'me' | 'other'
@@ -65,14 +65,17 @@ export const useChatStore = defineStore('chat', () => {
   // 处理WebSocket消息
   function handleWebSocketMessage(data: WebSocketMessage) {
     if (data.type === 'message') {
-      const message: Message = {
-        id: Date.now().toString(),
-        text: data.content,
-        sender: 'other',
-        timestamp: new Date(),
-        userId: data.from || ''
+      // 检查消息是否来自当前选中的用户
+      if (selectedUser.value && data.from === selectedUser.value.id) {
+        const message: Message = {
+          id: Date.now().toString(),
+          text: data.content,
+          sender: 'other',
+          timestamp: new Date(),
+          userId: data.from || ''
+        }
+        messages.value.push(message)
       }
-      messages.value.push(message)
     }
   }
   

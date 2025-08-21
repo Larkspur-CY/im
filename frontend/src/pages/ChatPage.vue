@@ -25,6 +25,7 @@ import MessageList from '../components/chat/MessageList.vue'
 import MessageInput from '../components/chat/MessageInput.vue'
 import { useChatStore } from '../store/chatStore'
 import { websocketService } from '../services/websocketService'
+import type { Message } from '../store/chatStore'
 import '../assets/chat.css'
 
 const chatStore = useChatStore()
@@ -47,12 +48,25 @@ const selectUser = async (user: any) => {
 
 const handleSendMessage = async (messageText: string) => {
   if (messageText.trim() && chatStore.selectedUser && chatStore.currentUser) {
-    // 先通过WebSocket发送消息（实时显示）
-    websocketService.sendMessage({
+    // 创建消息对象
+    const messageToSend = {
       type: 'message',
       content: messageText,
       to: chatStore.selectedUser.id
-    })
+    }
+    
+    // 先通过WebSocket发送消息（实时显示）
+    websocketService.sendMessage(messageToSend)
+    
+    // 将自己发送的消息添加到消息列表中
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: messageText,
+      sender: 'me',
+      timestamp: new Date(),
+      userId: chatStore.currentUser.id
+    }
+    chatStore.addMessage(newMessage)
     
     // 同时发送到后端API保存
     try {
@@ -81,92 +95,5 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.chat-container {
-  display: flex;
-  height: 100vh;
-}
-
-.user-list {
-  width: 250px;
-  border-right: 1px solid #e0e0e0;
-  padding: 20px;
-}
-
-.user-list ul {
-  list-style: none;
-  padding: 0;
-}
-
-.user-list li {
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.user-list li:hover {
-  background-color: #f0f0f0;
-}
-
-.chat-window {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-header {
-  padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.message-list {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.message {
-  margin-bottom: 10px;
-}
-
-.message-content {
-  display: inline-block;
-  padding: 10px;
-  border-radius: 8px;
-  max-width: 70%;
-}
-
-.sent {
-  background-color: #0084ff;
-  color: white;
-  float: right;
-}
-
-.received {
-  background-color: #f0f0f0;
-  color: black;
-  float: left;
-}
-
-.message-input {
-  display: flex;
-  padding: 20px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.message-input input {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-}
-
-.message-input button {
-  margin-left: 10px;
-  padding: 10px 20px;
-  background-color: #0084ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+/* 所有样式已移至 chat.css 文件中，以确保全局一致性和避免重复 */
 </style>
