@@ -1,4 +1,5 @@
 import { userApi } from './apiService'
+import { websocketService } from './websocketService'
 
 // 定义用户类型
 export interface User {
@@ -59,6 +60,9 @@ export const authService = {
   
   // 登出
   logout: (): void => {
+    // 断开WebSocket连接
+    websocketService.disconnect()
+    
     localStorage.removeItem('token')
     localStorage.removeItem('user')
   },

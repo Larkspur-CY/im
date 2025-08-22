@@ -1,6 +1,9 @@
 <template>
   <div class="user-list">
-    <h3>用户列表</h3>
+    <div class="user-list-header">
+      <h3>用户列表</h3>
+      <button class="logout-button" @click="handleLogout">退出登录</button>
+    </div>
     <ul>
       <li 
         v-for="user in users" 
@@ -31,8 +34,11 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { authService } from '../../services/authService'
+
 defineProps<{ users: User[]; selectedUser: User | null }>()
-defineEmits(['select-user'])
+const emit = defineEmits(['select-user'])
 
 interface User {
   id: string
@@ -41,6 +47,16 @@ interface User {
   status?: 'online' | 'offline' | 'away'
   isOnline?: boolean
   unreadCount?: number
+}
+
+const router = useRouter()
+
+const handleLogout = () => {
+  // 调用认证服务的登出方法
+  authService.logout()
+  
+  // 跳转到登录页面
+  router.push('/login')
 }
 </script>
 
@@ -51,16 +67,50 @@ interface User {
   padding: 20px;
   height: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 .user-list h3 {
   margin-top: 0;
+  margin-bottom: 0;
+}
+
+.logout-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logout-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.logout-button:active {
+  transform: translateY(0);
 }
 
 .user-list ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .user-list li {
