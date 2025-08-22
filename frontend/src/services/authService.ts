@@ -1,0 +1,93 @@
+import { userApi } from './apiService'
+
+// 定义用户类型
+export interface User {
+  id: number
+  username: string
+  nickname?: string
+  email: string
+  avatar?: string
+  isOnline?: boolean
+  lastLoginTime?: string
+  createdTime?: string
+  updatedTime?: string
+}
+
+// 定义登录凭证类型
+export interface LoginCredentials {
+  username: string
+  password: string
+}
+
+// 定义注册数据类型
+export interface RegisterData {
+  username: string
+  nickname: string
+  email: string
+  password: string
+}
+
+// 定义认证服务
+export const authService = {
+  // 登录
+  login: async (credentials: LoginCredentials): Promise<User> => {
+    try {
+      const response = await userApi.login(credentials)
+      
+      // 保存用户信息到本地存储
+      localStorage.setItem('user', JSON.stringify(response.data))
+      
+      // 由于后端没有返回token，我们使用用户ID作为简单的认证标识
+      localStorage.setItem('token', response.data.id.toString())
+      
+      return response.data
+    } catch (error: any) {
+      console.error('登录失败:', error)
+      throw error
+    }
+  },
+  
+  // 注册
+  register: async (data: RegisterData): Promise<void> => {
+    try {
+      await userApi.register(data)
+    } catch (error: any) {
+      console.error('注册失败:', error)
+      throw error
+    }
+  },
+  
+  // 登出
+  logout: (): void => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  },
+  
+  // 获取当前用户
+  getCurrentUser: (): User | null => {
+    const userStr = localStorage.getItem('user')
+    return userStr ? JSON.parse(userStr) : null
+  },
+  
+  // 检查是否已登录
+  isAuthenticated: (): boolean => {
+    return localStorage.getItem('token') !== null
+  },
+  
+  // 验证用户是否有效
+  validateUser: async (): Promise<boolean> => {
+    const userId = localStorage.getItem('token')
+    if (!userId) return false
+    
+    try {
+      const response = await userApi.getUserById(userId)
+      return response.status === 200
+    } catch (error: any) {
+      console.error('用户验证失败:', error)
+      authService.logout() // 如果用户无效，清除本地存储
+      return false
+    }
+  }
+}
+
+export default authService

@@ -1,5 +1,7 @@
 package com.im.backend.service;
 
+import com.im.backend.dto.RegisterUserDTO;
+import com.im.backend.dto.UpdateUserDTO;
 import com.im.backend.model.User;
 import com.im.backend.repository.UserRepository;
 import com.im.backend.service.MessageService;
@@ -64,6 +66,17 @@ public class UserService {
 
         return userRepository.save(user);
     }
+    
+    public User createUser(RegisterUserDTO userDto) {
+        User user = new User();
+        user.setUsername(userDto.getUsername());
+        user.setPassword(userDto.getPassword());
+        user.setEmail(userDto.getEmail());
+        user.setNickname(userDto.getNickname());
+        user.setAvatar(userDto.getAvatar());
+        
+        return createUser(user);
+    }
 
     public User authenticateUser(String username, String password) {
         User user = userRepository.findByUsername(username);
@@ -89,6 +102,27 @@ public class UserService {
             }
             if (userDetails.getEmail() != null) {
                 user.setEmail(userDetails.getEmail());
+            }
+            
+            user.setUpdatedTime(LocalDateTime.now());
+            return userRepository.save(user);
+        }
+        return null;
+    }
+    
+    public User updateUser(Long id, UpdateUserDTO userDto) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            
+            if (userDto.getNickname() != null) {
+                user.setNickname(userDto.getNickname());
+            }
+            if (userDto.getAvatar() != null) {
+                user.setAvatar(userDto.getAvatar());
+            }
+            if (userDto.getEmail() != null) {
+                user.setEmail(userDto.getEmail());
             }
             
             user.setUpdatedTime(LocalDateTime.now());

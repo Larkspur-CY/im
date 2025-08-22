@@ -1,5 +1,8 @@
 package com.im.backend.controller;
 
+import com.im.backend.dto.LoginRequestDTO;
+import com.im.backend.dto.RegisterUserDTO;
+import com.im.backend.dto.UpdateUserDTO;
 import com.im.backend.dto.UserWithUnreadCountDTO;
 import com.im.backend.model.User;
 import com.im.backend.service.UserService;
@@ -39,7 +42,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@RequestBody User user) {
+    public ResponseEntity<User> registerUser(@RequestBody RegisterUserDTO user) {
         try {
             User newUser = userService.createUser(user);
             return ResponseEntity.ok(newUser);
@@ -49,7 +52,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<User> loginUser(@RequestBody User loginRequest) {
+    public ResponseEntity<User> loginUser(@RequestBody LoginRequestDTO loginRequest) {
         User user = userService.authenticateUser(loginRequest.getUsername(), loginRequest.getPassword());
         if (user != null) {
             return ResponseEntity.ok(user);
@@ -58,7 +61,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody UpdateUserDTO user) {
         User updatedUser = userService.updateUser(id, user);
         if (updatedUser != null) {
             return ResponseEntity.ok(updatedUser);
