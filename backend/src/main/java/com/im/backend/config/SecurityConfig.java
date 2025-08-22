@@ -32,7 +32,7 @@ public class SecurityConfig {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeRequests()
-                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers("/api/open/**").permitAll()
                 .antMatchers("/ws/**").permitAll()
                 .requestMatchers(request -> "OPTIONS".equals(request.getMethod())).permitAll() // 允许所有OPTIONS请求
                 .anyRequest().authenticated()

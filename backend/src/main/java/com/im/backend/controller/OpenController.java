@@ -2,10 +2,13 @@ package com.im.backend.controller;
 
 import com.im.backend.dto.LoginRequestDTO;
 import com.im.backend.dto.RegisterUserDTO;
+import com.im.backend.dto.ResetPasswordDTO;
+import com.im.backend.dto.VerifyEmailDTO;
 import com.im.backend.model.User;
 import com.im.backend.service.UserService;
 import com.im.backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,9 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
-public class AuthController {
+@RequestMapping("/api/open")
+public class OpenController {
 
     @Autowired
     private UserService userService;
@@ -23,6 +25,9 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    /**
+     * 用户登录
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
         try {
@@ -46,6 +51,9 @@ public class AuthController {
         }
     }
 
+    /**
+     * 用户注册
+     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterUserDTO registerUserDTO) {
         try {
@@ -56,20 +64,33 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/validate")
-    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader) {
+    /**
+     * 验证用户邮箱（用于忘记密码）
+     */
+    @PostMapping("/verify-email")
+    public ResponseEntity<Boolean> verifyUserEmail(@RequestBody VerifyEmailDTO verifyEmailDTO) {
         try {
-            String token = authHeader.substring(7); // 移除"Bearer "前缀
-            String userId = jwtUtil.getUserIdFromToken(token);
-            User user = userService.getUserById(Long.valueOf(userId));
-            
-            if (user != null && jwtUtil.validateToken(token, user.getId())) {
-                return ResponseEntity.ok(user);
-            } else {
-                return ResponseEntity.status(401).body("Token无效");
-            }
+            boolean isValid = userService.verifyUserEmail(verifyEmailDTO.getUsername(), verifyEmailDTO.getEmail());
+            return ResponseEntity.ok(isValid);
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Token验证失败");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
+        }
+    }
+    
+    /**
+     * 重置密码
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO) {
+        try {
+            User user = userService.resetPassword(
+                resetPasswordDTO.getUsername(), 
+                resetPasswordDTO.getEmail(), 
+                resetPasswordDTO.getNewPassword()
+            );
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("重置密码失败: " + e.getMessage());
         }
     }
 }

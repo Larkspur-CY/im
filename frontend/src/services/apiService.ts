@@ -46,10 +46,10 @@ export const userApi = {
   getUserById: (id: string) => apiClient.get(`/users/${id}`),
   
   // 用户注册
-  register: (userData: any) => apiClient.post('/auth/register', userData),
+  register: (userData: any) => apiClient.post('/open/register', userData),
   
   // 用户登录
-  login: (credentials: any) => apiClient.post('/auth/login', credentials),
+  login: (credentials: any) => apiClient.post('/open/login', credentials),
   
   // 获取在线用户
   getOnlineUsers: () => apiClient.get('/users/online'),
@@ -58,10 +58,10 @@ export const userApi = {
   getWithUnreadCount: (userId: string) => apiClient.get(`/users/with-unread-count/${userId}`),
   
   // 验证用户邮箱（用于忘记密码）
-  verifyUserEmail: (data: any) => apiClient.post('/users/verify-email', data),
+  verifyUserEmail: (data: any) => apiClient.post('/open/verify-email', data),
   
   // 重置密码
-  resetPassword: (data: any) => apiClient.post('/users/reset-password', data),
+  resetPassword: (data: any) => apiClient.post('/open/reset-password', data),
 }
 
 // 消息相关API
