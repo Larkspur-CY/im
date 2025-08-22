@@ -41,6 +41,12 @@ export const userApi = {
   
   // 获取带未读数量的用户列表
   getWithUnreadCount: (userId: string) => apiClient.get(`/users/with-unread-count/${userId}`),
+  
+  // 验证用户邮箱（用于忘记密码）
+  verifyUserEmail: (data: any) => apiClient.post('/users/verify-email', data),
+  
+  // 重置密码
+  resetPassword: (data: any) => apiClient.post('/users/reset-password', data),
 }
 
 // 消息相关API

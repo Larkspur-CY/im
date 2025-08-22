@@ -154,4 +154,35 @@ public class UserService {
             userRepository.save(user);
         }
     }
+    
+    /**
+     * 验证用户名和邮箱是否匹配
+     * @param username 用户名
+     * @param email 邮箱
+     * @return 如果匹配返回true，否则返回false
+     */
+    public boolean verifyUserEmail(String username, String email) {
+        User user = userRepository.findByUsername(username);
+        if (user != null && user.getEmail().equals(email)) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * 重置用户密码
+     * @param username 用户名
+     * @param email 邮箱
+     * @param newPassword 新密码
+     * @return 更新后的用户对象
+     */
+    public User resetPassword(String username, String email, String newPassword) {
+        User user = userRepository.findByUsername(username);
+        if (user != null && user.getEmail().equals(email)) {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setUpdatedTime(LocalDateTime.now());
+            return userRepository.save(user);
+        }
+        throw new RuntimeException("用户名或邮箱不正确");
+    }
 }

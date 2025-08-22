@@ -1,9 +1,6 @@
 package com.im.backend.controller;
 
-import com.im.backend.dto.LoginRequestDTO;
-import com.im.backend.dto.RegisterUserDTO;
-import com.im.backend.dto.UpdateUserDTO;
-import com.im.backend.dto.UserWithUnreadCountDTO;
+import com.im.backend.dto.*;
 import com.im.backend.model.User;
 import com.im.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,5 +77,35 @@ public class UserController {
     @GetMapping("/online")
     public ResponseEntity<List<User>> getOnlineUsers() {
         return ResponseEntity.ok(userService.getOnlineUsers());
+    }
+    
+    /**
+     * 验证用户邮箱（用于忘记密码）
+     */
+    @PostMapping("/verify-email")
+    public ResponseEntity<Boolean> verifyUserEmail(@RequestBody VerifyEmailDTO verifyEmailDTO) {
+        try {
+            boolean isValid = userService.verifyUserEmail(verifyEmailDTO.getUsername(), verifyEmailDTO.getEmail());
+            return ResponseEntity.ok(isValid);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
+        }
+    }
+    
+    /**
+     * 重置密码
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO) {
+        try {
+            User user = userService.resetPassword(
+                resetPasswordDTO.getUsername(), 
+                resetPasswordDTO.getEmail(), 
+                resetPasswordDTO.getNewPassword()
+            );
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
