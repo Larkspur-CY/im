@@ -37,6 +37,11 @@ mybatis-plus:
     db-config:
       id-type: auto
 
+# JWT配置
+jwt:
+  secret: imchatsecret
+  expiration: 86400
+
 # 日志配置
 logging:
   level:

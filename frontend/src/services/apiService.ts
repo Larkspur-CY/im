@@ -11,6 +11,21 @@ const apiClient = axios.create({
   },
 })
 
+// 添加请求拦截器
+apiClient.interceptors.request.use(
+  (config) => {
+    debugger
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
 // 定义消息类型
 export interface Message {
   id: string
@@ -31,10 +46,10 @@ export const userApi = {
   getUserById: (id: string) => apiClient.get(`/users/${id}`),
   
   // 用户注册
-  register: (userData: any) => apiClient.post('/users/register', userData),
+  register: (userData: any) => apiClient.post('/auth/register', userData),
   
   // 用户登录
-  login: (credentials: any) => apiClient.post('/users/login', credentials),
+  login: (credentials: any) => apiClient.post('/auth/login', credentials),
   
   // 获取在线用户
   getOnlineUsers: () => apiClient.get('/users/online'),

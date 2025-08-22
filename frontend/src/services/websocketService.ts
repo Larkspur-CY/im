@@ -18,8 +18,17 @@ export class WebSocketService {
     try {
       // 使用SockJS和STOMP建立连接
       const socket = new SockJS(this.url);
+      
+      // 获取认证token
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       this.stompClient = new Client({
         webSocketFactory: () => socket,
+        connectHeaders: headers,
         reconnectDelay: this.reconnectInterval,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,

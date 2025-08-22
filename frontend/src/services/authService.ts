@@ -1,5 +1,6 @@
 import { userApi } from './apiService'
 import { websocketService } from './websocketService'
+import { jwtDecode } from 'jwt-decode'
 
 // 定义用户类型
 export interface User {
@@ -36,12 +37,12 @@ export const authService = {
       const response = await userApi.login(credentials)
       
       // 保存用户信息到本地存储
-      localStorage.setItem('user', JSON.stringify(response.data))
+      localStorage.setItem('user', JSON.stringify(response.data.user))
       
-      // 由于后端没有返回token，我们使用用户ID作为简单的认证标识
-      localStorage.setItem('token', response.data.id.toString())
+      // 保存JWT token
+      localStorage.setItem('token', response.data.token)
       
-      return response.data
+      return response.data.user
     } catch (error: any) {
       console.error('登录失败:', error)
       throw error
@@ -49,9 +50,10 @@ export const authService = {
   },
   
   // 注册
-  register: async (data: RegisterData): Promise<void> => {
+  register: async (data: RegisterData): Promise<User> => {
     try {
-      await userApi.register(data)
+      const response = await userApi.register(data)
+      return response.data
     } catch (error: any) {
       console.error('注册失败:', error)
       throw error
@@ -80,10 +82,14 @@ export const authService = {
   
   // 验证用户是否有效
   validateUser: async (): Promise<boolean> => {
-    const userId = localStorage.getItem('token')
-    if (!userId) return false
+    const token = localStorage.getItem('token')
+    if (!token) return false
     
     try {
+      // 解析JWT token获取用户ID
+      const decoded: any = jwtDecode(token)
+      const userId = decoded.sub
+      
       const response = await userApi.getUserById(userId)
       return response.status === 200
     } catch (error: any) {
