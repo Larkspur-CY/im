@@ -136,6 +136,3 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-/* 所有样式已移至 chat.css 文件中，以确保全局一致性和避免重复 */
-</style>

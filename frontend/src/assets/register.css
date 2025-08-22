@@ -1,0 +1,53 @@
+/* 继承login.css的基础样式 */
+@import './login.css';
+
+/* 注册页面特定样式 */
+.error-message {
+  color: #ff4757;
+  font-size: 14px;
+  margin-bottom: 15px;
+  text-align: left;
+  background-color: rgba(255, 71, 87, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  border-left: 3px solid #ff4757;
+}
+
+.register-button {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.register-button:hover {
+  opacity: 0.9;
+}
+
+.register-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.login-link a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
