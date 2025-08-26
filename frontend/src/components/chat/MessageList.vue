@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUpdated, computed } from 'vue'
+import { ref, watch, onUpdated } from 'vue'
 import { useChatStore } from '../../store/chatStore'
 import '../../assets/message-list.css'
 
