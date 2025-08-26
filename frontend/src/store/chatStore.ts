@@ -7,7 +7,7 @@ import type { Message } from '../services/apiService'
 
 // 定义用户类型
 interface User {
-  id: string
+  id: number
   username: string
   nickname?: string
   email?: string
@@ -66,15 +66,15 @@ export const useChatStore = defineStore('chat', () => {
       return;
     }
     
-    const senderId = data.senderId.toString();
+    const senderId = data.senderId;
     
     // 创建消息对象
     const message: Message = {
-      id: data.id ? data.id.toString() : Date.now().toString(),
+      id: data.id ? data.id : Date.now(),
       text: data.content,
       // 判断消息是否由当前用户发送
       // 如果senderId等于当前用户ID，则是当前用户发送的消息
-      sender: currentUser.value && senderId === currentUser.value.id ? 'me' : 'other',
+      sender: currentUser.value && senderId == currentUser.value.id ? 'me' : 'other',
       timestamp: data.sentTime ? new Date(data.sentTime) : new Date(),
       userId: senderId
     }
@@ -82,7 +82,7 @@ export const useChatStore = defineStore('chat', () => {
     console.log('处理消息:', {
       senderId: senderId,
       currentUserId: currentUser.value?.id,
-      isSentByMe: currentUser.value && senderId === currentUser.value.id,
+      isSentByMe: currentUser.value && senderId == currentUser.value.id,
       sender: message.sender
     });
     
@@ -90,11 +90,11 @@ export const useChatStore = defineStore('chat', () => {
     messages.value.push(message)
     
     // 如果消息不是当前用户发送的（即收到了其他用户的消息）
-    if (currentUser.value && senderId !== currentUser.value.id) {
+    if (currentUser.value && senderId != currentUser.value.id) {
       // 检查消息是否来自当前选中的用户
-      if (selectedUser.value && senderId === selectedUser.value.id) {
+      if (selectedUser.value && senderId == selectedUser.value.id) {
         // 如果是当前选中的用户发来的消息，重置该用户的未读消息数量
-        const userIndex = users.value.findIndex(user => user.id === senderId);
+        const userIndex = users.value.findIndex(user => user.id == senderId);
         if (userIndex !== -1) {
           const updatedUsers = [...users.value];
           updatedUsers[userIndex].unreadCount = 0;
@@ -102,7 +102,7 @@ export const useChatStore = defineStore('chat', () => {
         }
       } else {
         // 如果不是当前选中的用户发来的消息，增加该用户的未读消息数量
-        const userIndex = users.value.findIndex(user => user.id === senderId);
+        const userIndex = users.value.findIndex(user => user.id == senderId);
         if (userIndex !== -1) {
           const updatedUsers = [...users.value];
           updatedUsers[userIndex].unreadCount = (updatedUsers[userIndex].unreadCount || 0) + 1;
@@ -131,7 +131,7 @@ export const useChatStore = defineStore('chat', () => {
         
         // 处理带未读数量的用户数据
         users.value = response.data.map((item: any) => ({
-          id: item.user.id.toString(),
+          id: item.user.id,
           username: item.user.username,
           nickname: item.user.nickname,
           email: item.user.email,
@@ -145,7 +145,7 @@ export const useChatStore = defineStore('chat', () => {
         
         // 处理普通用户数据
         users.value = response.data.map((user: any) => ({
-          id: user.id.toString(),
+          id: user.id,
           username: user.username,
           nickname: user.nickname,
           email: user.email,
@@ -163,7 +163,7 @@ export const useChatStore = defineStore('chat', () => {
     try {
       const response = await userApi.getOnlineUsers();
       return response.data.map((user: any) => ({
-        id: user.id.toString(),
+        id: user.id,
         name: user.nickname || user.username,
         avatar: user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.username}`,
         status: 'online',
@@ -176,17 +176,17 @@ export const useChatStore = defineStore('chat', () => {
   }
   
   // 从后端获取两个用户之间的消息
-  async function fetchMessagesBetweenUsers(senderId: string, receiverId: string) {
+  async function fetchMessagesBetweenUsers(senderId: number, receiverId: number) {
     try {
       const response = await messageApi.getMessagesBetweenUsers(senderId, receiverId);
       messages.value = response.data.map((msg: any) => ({
-        id: msg.id.toString(),
+        id: msg.id,
         text: msg.content,
         // 判断消息是否由当前用户发送
         // 如果senderId等于当前用户ID，则是当前用户发送的消息
-        sender: msg.senderId.toString() === currentUser.value?.id ? 'me' : 'other',
+        sender: msg.senderId == currentUser.value?.id ? 'me' : 'other',
         timestamp: new Date(msg.sentTime),
-        userId: msg.senderId.toString()
+        userId: msg.senderId
       }));
       
       console.log('获取消息:', {
@@ -195,7 +195,7 @@ export const useChatStore = defineStore('chat', () => {
       });
       
       // 重置对应用户的未读消息数量
-      const userIndex = users.value.findIndex(user => user.id === receiverId);
+      const userIndex = users.value.findIndex(user => user.id == receiverId);
       if (userIndex !== -1) {
         const updatedUsers = [...users.value];
         updatedUsers[userIndex].unreadCount = 0;
@@ -204,7 +204,7 @@ export const useChatStore = defineStore('chat', () => {
       
       // 获取并更新发送者的未读消息数量
       const unreadResponse = await messageApi.getUnreadMessageCountBetweenUsers(receiverId, senderId);
-      const senderUserIndex = users.value.findIndex(user => user.id === senderId);
+      const senderUserIndex = users.value.findIndex(user => user.id == senderId);
       if (senderUserIndex !== -1) {
         const updatedUsers = [...users.value];
         updatedUsers[senderUserIndex].unreadCount = unreadResponse.data;

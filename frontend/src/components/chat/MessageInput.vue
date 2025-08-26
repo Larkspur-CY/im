@@ -21,7 +21,7 @@ defineProps<{ selectedUser: User | null }>()
 const emit = defineEmits(['send-message'])
 
 interface User {
-  id: string
+  id: number
   username: string
   nickname?: string
   email?: string

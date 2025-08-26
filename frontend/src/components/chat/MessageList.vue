@@ -41,10 +41,10 @@ import { useChatStore } from '../../store/chatStore'
 import '../../assets/message-list.css'
 
 interface Message {
-  id: string
+  id: number
   text: string
   sender: 'me' | 'other'
-  userId: string
+  userId: number
   timestamp: Date
   error?: boolean
   errorMessage?: string
@@ -54,8 +54,8 @@ const props = defineProps<{ messages: Message[] }>()
 const chatStore = useChatStore()
 
 // 获取用户昵称的首字母
-const getUserInitial = (userId: string) => {
-  const user = chatStore.users.find(u => u.id === userId)
+const getUserInitial = (userId: number) => {
+  const user = chatStore.users.find(u => u.id == userId)
   if (user) {
     return (user.nickname || user.username)?.charAt(0).toUpperCase() || 'U'
   }

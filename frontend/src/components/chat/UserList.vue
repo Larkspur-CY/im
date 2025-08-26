@@ -43,7 +43,7 @@ defineProps<{ users: User[]; selectedUser: User | null }>()
 const emit = defineEmits(['select-user'])
 
 interface User {
-  id: string
+  id: number
   username: string
   nickname?: string
   status?: 'online' | 'offline' | 'away'

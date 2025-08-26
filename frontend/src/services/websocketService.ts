@@ -56,7 +56,7 @@ export class WebSocketService {
             const senderId = data.senderId;
             const unreadCount = data.unreadCount;
             const chatStore = useChatStore();
-            const userIndex = chatStore.users.findIndex(user => user.id === senderId);
+            const userIndex = chatStore.users.findIndex(user => user.id == senderId);
             
             if (userIndex !== -1) {
               const updatedUsers = [...chatStore.users];
@@ -69,7 +69,7 @@ export class WebSocketService {
           this.stompClient?.subscribe('/topic/online-users', (message: IMessage) => {
             const data = JSON.parse(message.body);
             const chatStore = useChatStore();
-            const onlineUserIds = new Set(data.content.map((user: any) => user.id.toString()));
+            const onlineUserIds = new Set(data.content.map((user: any) => user.id));
             const updatedUsers = chatStore.users.map(user => ({
               ...user,
               status: onlineUserIds.has(user.id) ? 'online' : 'offline'

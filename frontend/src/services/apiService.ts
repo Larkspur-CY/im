@@ -27,11 +27,11 @@ apiClient.interceptors.request.use(
 
 // 定义消息类型
 export interface Message {
-  id: string
+  id: number
   text: string
   sender: 'me' | 'other'
   timestamp: Date
-  userId: string
+  userId: number
   error?: boolean
   errorMessage?: string
 }
@@ -42,7 +42,7 @@ export const userApi = {
   getAllUsers: () => apiClient.get('/users'),
   
   // 根据ID获取用户
-  getUserById: (id: string) => apiClient.get(`/users/${id}`),
+  getUserById: (id: number) => apiClient.get(`/users/${id}`),
   
   // 用户注册
   register: (userData: any) => apiClient.post('/open/register', userData),
@@ -69,31 +69,31 @@ export const messageApi = {
   sendMessage: (messageData: any) => apiClient.post('/messages', messageData),
   
   // 获取两个用户之间的消息
-  getMessagesBetweenUsers: (senderId: string, receiverId: string) => 
+  getMessagesBetweenUsers: (senderId: number, receiverId: number) => 
     apiClient.get(`/messages/between/${senderId}/${receiverId}`),
   
   // 获取未读消息
-  getUnreadMessages: (userId: string) => apiClient.get(`/messages/unread/${userId}`),
+  getUnreadMessages: (userId: number) => apiClient.get(`/messages/unread/${userId}`),
   
   // 获取未读消息数量
-  getUnreadMessageCount: (userId: string) => apiClient.get(`/messages/unread/count/${userId}`),
+  getUnreadMessageCount: (userId: number) => apiClient.get(`/messages/unread/count/${userId}`),
   
   // 获取特定用户之间的未读消息数量
-  getUnreadMessageCountBetweenUsers: (senderId: string, receiverId: string) => 
+  getUnreadMessageCountBetweenUsers: (senderId: number, receiverId: number) => 
     apiClient.get(`/messages/unread/count/${senderId}/${receiverId}`),
   
   // 标记消息已读
-  markMessageAsRead: (messageId: string) => apiClient.put(`/messages/read/${messageId}`),
+  markMessageAsRead: (messageId: number) => apiClient.put(`/messages/read/${messageId}`),
   
   // 标记所有消息已读
-  markAllMessagesAsRead: (senderId: string, receiverId: string) => 
+  markAllMessagesAsRead: (senderId: number, receiverId: number) => 
     apiClient.put(`/messages/read/${senderId}/${receiverId}`),
   
   // 获取消息历史
-  getMessageHistory: (userId: string) => apiClient.get(`/messages/history/${userId}`),
+  getMessageHistory: (userId: number) => apiClient.get(`/messages/history/${userId}`),
   
   // 删除消息
-  deleteMessage: (messageId: string) => apiClient.delete(`/messages/${messageId}`),
+  deleteMessage: (messageId: number) => apiClient.delete(`/messages/${messageId}`),
 }
 
 export default {

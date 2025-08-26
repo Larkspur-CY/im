@@ -53,7 +53,7 @@ const selectUser = async (user: any) => {
   }
   
   // 重置该用户的未读消息数量
-  const userIndex = chatStore.users.findIndex(u => u.id === user.id);
+  const userIndex = chatStore.users.findIndex(u => u.id == user.id);
   if (userIndex !== -1) {
     const updatedUsers = [...chatStore.users];
     updatedUsers[userIndex].unreadCount = 0;
@@ -105,7 +105,7 @@ const handleSendMessage = async (messageText: string) => {
     
     // 将自己发送的消息添加到消息列表中
     const newMessage: Message = {
-      id: Date.now().toString(),
+      id: Date.now(),
       text: messageText,
       sender: 'me',
       timestamp: new Date(),
@@ -122,7 +122,7 @@ onMounted(async () => {
   if (authUser) {
     // 将 authService 的 User 类型转换为 chatStore 使用的 User 类型
     const userForStore = {
-      id: authUser.id.toString(), // 将 number 转换为 string
+      id: authUser.id, // 直接使用 number 类型
       username: authUser.username,
       nickname: authUser.nickname || '',
       email: authUser.email
@@ -151,4 +151,3 @@ onUnmounted(() => {
   window.removeEventListener('websocketError', handleWebSocketError as EventListener);
 })
 </script>
-
