@@ -76,18 +76,17 @@ public class OpenController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
         }
     }
-    
+
     /**
      * 重置密码
      */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO) {
         try {
-            User user = userService.resetPassword(
-                resetPasswordDTO.getUsername(), 
-                resetPasswordDTO.getEmail(), 
-                resetPasswordDTO.getNewPassword()
-            );
+            userService.resetPassword(
+                    resetPasswordDTO.getUsername(),
+                    resetPasswordDTO.getEmail(),
+                    resetPasswordDTO.getNewPassword());
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("重置密码失败: " + e.getMessage());
