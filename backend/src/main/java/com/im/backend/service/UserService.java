@@ -4,7 +4,6 @@ import com.im.backend.dto.RegisterUserDTO;
 import com.im.backend.dto.UpdateUserDTO;
 import com.im.backend.model.User;
 import com.im.backend.repository.UserRepository;
-import com.im.backend.service.MessageService;
 import com.im.backend.dto.UserWithUnreadCountDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
