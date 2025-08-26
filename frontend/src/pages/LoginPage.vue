@@ -3,8 +3,8 @@
     <canvas id="particles-canvas" class="particles-canvas"></canvas>
     <div class="login-box">
       <div class="login-header">
-        <img src="../assets/logo.svg" alt="Logo" class="login-logo" />
-        <h2>即时通讯系统</h2>
+        <img src="/images/favicon/android-chrome-192x192.png" alt="Logo" class="login-logo" />
+        <h2>Corey IM</h2>
         <p>请登录您的账号</p>
       </div>
       <div class="login-form">
