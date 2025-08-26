@@ -63,7 +63,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3>重置密码</h3>
-        <button class="close-button" @click="showForgotPasswordModal = false">
+        <button class="close-button" @click="closeResetPasswordModal">
           &times;
         </button>
       </div>
@@ -202,6 +202,18 @@ const goToRegister = () => {
   router.push("/register");
 };
 
+// 关闭重置密码弹窗并重置所有状态
+const closeResetPasswordModal = () => {
+  showForgotPasswordModal.value = false;
+  resetStep.value = 1;
+  resetUsername.value = "";
+  resetEmail.value = "";
+  newPassword.value = "";
+  confirmPassword.value = "";
+  resetErrorMessage.value = "";
+  resetSuccessMessage.value = "";
+};
+
 // 忘记密码处理函数
 const handleResetPassword = async () => {
   resetErrorMessage.value = "";
@@ -248,13 +260,7 @@ const handleResetPassword = async () => {
 
       // 3秒后关闭模态框
       setTimeout(() => {
-        showForgotPasswordModal.value = false;
-        resetStep.value = 1;
-        resetUsername.value = "";
-        resetEmail.value = "";
-        newPassword.value = "";
-        confirmPassword.value = "";
-        resetSuccessMessage.value = "";
+        closeResetPasswordModal();
       }, 3000);
     }
   } catch (error: any) {
