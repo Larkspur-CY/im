@@ -124,6 +124,21 @@
   color: white;
   border-bottom-right-radius: 8px;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  position: relative;
+}
+
+/* 右侧消息箭头 - 使用圆角方式 */
+.sent:before {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 12px;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transform: rotate(45deg);
+  z-index: 0;
+  box-shadow: 2px -2px 2px rgba(0, 0, 0, 0.1);
 }
 
 .received {
@@ -132,11 +147,29 @@
   border: 1px solid #e0e0e0;
   border-bottom-left-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+/* 左侧消息箭头 - 使用圆角方式 */
+.received:before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 12px;
+  width: 12px;
+  height: 12px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-right: none;
+  border-top: none;
+  transform: rotate(45deg);
+  box-shadow: -2px 2px 2px rgba(0, 0, 0, 0.05);
+  z-index: 0;
 }
 
 /* 增强消息框与头像的对比度 */
 .message-content {
-  margin: 0 6px; /* 增加消息框与头像的间距 */
+  margin: 0 4px; /* 调整消息框与头像的间距 */
 }
 
 .message-footer {
