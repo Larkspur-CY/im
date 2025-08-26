@@ -1,7 +1,9 @@
 <template>
   <div class="login-container">
+    <canvas id="particles-canvas" class="particles-canvas"></canvas>
     <div class="login-box">
       <div class="login-header">
+        <img src="../assets/logo.svg" alt="Logo" class="login-logo" />
         <h2>即时通讯系统</h2>
         <p>请登录您的账号</p>
       </div>
@@ -37,7 +39,12 @@
             <input type="checkbox" id="remember" v-model="rememberMe" />
             <label for="remember">记住我</label>
           </div>
-          <a href="#" class="forgot-password" @click.prevent="showForgotPasswordModal = true">忘记密码?</a>
+          <a
+            href="#"
+            class="forgot-password"
+            @click.prevent="showForgotPasswordModal = true"
+            >忘记密码?</a
+          >
         </div>
 
         <button class="login-button" @click="login" :disabled="isLoading">
@@ -56,7 +63,9 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3>重置密码</h3>
-        <button class="close-button" @click="showForgotPasswordModal = false">&times;</button>
+        <button class="close-button" @click="showForgotPasswordModal = false">
+          &times;
+        </button>
       </div>
       <div class="modal-body">
         <div v-if="resetStep === 1">
@@ -109,12 +118,18 @@
         </div>
 
         <div class="modal-footer">
-          <button 
-            class="reset-button" 
-            @click="handleResetPassword" 
+          <button
+            class="reset-button"
+            @click="handleResetPassword"
             :disabled="resetLoading"
           >
-            {{ resetLoading ? "处理中..." : resetStep === 1 ? "下一步" : "重置密码" }}
+            {{
+              resetLoading
+                ? "处理中..."
+                : resetStep === 1
+                ? "下一步"
+                : "重置密码"
+            }}
           </button>
         </div>
       </div>
@@ -123,10 +138,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { authService } from "../services/authService";
 import { userApi } from "../services/apiService";
+import { initParticles } from "../assets/particles";
 import "../assets/login.css";
 
 const router = useRouter();
@@ -191,7 +207,7 @@ const handleResetPassword = async () => {
   resetErrorMessage.value = "";
   resetSuccessMessage.value = "";
   resetLoading.value = true;
-  
+
   try {
     if (resetStep.value === 1) {
       // 第一步：验证用户名和邮箱
@@ -199,13 +215,13 @@ const handleResetPassword = async () => {
         resetErrorMessage.value = "请输入用户名和邮箱";
         return;
       }
-      
+
       // 调用验证接口
       const response = await userApi.verifyUserEmail({
         username: resetUsername.value,
-        email: resetEmail.value
+        email: resetEmail.value,
       });
-      
+
       if (response.data) {
         resetStep.value = 2;
       }
@@ -215,21 +231,21 @@ const handleResetPassword = async () => {
         resetErrorMessage.value = "请输入新密码和确认密码";
         return;
       }
-      
+
       if (newPassword.value !== confirmPassword.value) {
         resetErrorMessage.value = "两次输入的密码不一致";
         return;
       }
-      
+
       // 调用重置密码接口
       await userApi.resetPassword({
         username: resetUsername.value,
         email: resetEmail.value,
-        newPassword: newPassword.value
+        newPassword: newPassword.value,
       });
-      
+
       resetSuccessMessage.value = "密码重置成功，请使用新密码登录";
-      
+
       // 3秒后关闭模态框
       setTimeout(() => {
         showForgotPasswordModal.value = false;
@@ -244,7 +260,8 @@ const handleResetPassword = async () => {
   } catch (error: any) {
     console.error("重置密码出错:", error);
     if (error.response && error.response.data) {
-      resetErrorMessage.value = error.response.data.message || "操作失败，请稍后再试";
+      resetErrorMessage.value =
+        error.response.data.message || "操作失败，请稍后再试";
     } else {
       resetErrorMessage.value = "操作失败，请稍后再试";
     }
@@ -259,5 +276,37 @@ if (rememberedUsername) {
   username.value = rememberedUsername;
   rememberMe.value = true;
 }
-</script>
 
+// 用于存储事件监听器引用
+let darkModeMediaQuery: MediaQueryList;
+let handleDarkModeChange: (e: MediaQueryListEvent) => void;
+
+// 初始化粒子背景
+onMounted(() => {
+  // 检测是否为深色模式
+  const prefersDarkMode =
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const colorScheme = prefersDarkMode ? "dark" : "light";
+
+  // 初始化粒子动画
+  initParticles("particles-canvas", 80, colorScheme);
+
+  // 监听深色模式变化
+  darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  handleDarkModeChange = (e: MediaQueryListEvent) => {
+    const newColorScheme = e.matches ? "dark" : "light";
+    // 重新初始化粒子动画
+    initParticles("particles-canvas", 80, newColorScheme);
+  };
+
+  darkModeMediaQuery.addEventListener("change", handleDarkModeChange);
+});
+
+// 组件卸载时清理事件监听器
+onUnmounted(() => {
+  if (darkModeMediaQuery && handleDarkModeChange) {
+    darkModeMediaQuery.removeEventListener("change", handleDarkModeChange);
+  }
+});
+</script>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100" height="100">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#667eea" />
+      <stop offset="100%" stop-color="#764ba2" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+      <feOffset dx="0" dy="2" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 背景圆形 -->
+  <circle cx="100" cy="100" r="80" fill="url(#gradient)" opacity="0.1" />
+  
+  <!-- 聊天气泡图标 -->
+  <path d="M150,80 C150,57.9 129.7,40 104.5,40 C79.3,40 59,57.9 59,80 C59,94.6 68.9,107.4 83.5,114.3 C82.4,119.9 79.6,128.2 72.8,135 C72.5,135.3 72.4,135.8 72.6,136.2 C72.8,136.6 73.2,136.8 73.6,136.8 C85.9,136.8 95.1,129.9 100.2,124.8 C101.6,125 103.1,125 104.5,125 C129.7,125 150,107.1 150,85 L150,80 Z" 
+        fill="white" 
+        stroke="url(#gradient)" 
+        stroke-width="6" 
+        filter="url(#shadow)" />
+  
+  <!-- 消息线条 -->
+  <line x1="80" y1="70" x2="130" y2="70" stroke="url(#gradient)" stroke-width="5" stroke-linecap="round" />
+  <line x1="80" y1="90" x2="120" y2="90" stroke="url(#gradient)" stroke-width="5" stroke-linecap="round" />
+  <line x1="80" y1="110" x2="110" y2="110" stroke="url(#gradient)" stroke-width="5" stroke-linecap="round" />
+</svg>
