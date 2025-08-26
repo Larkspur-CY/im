@@ -159,21 +159,21 @@ export const useChatStore = defineStore('chat', () => {
   }
   
   // 获取在线用户
-  async function fetchOnlineUsers() {
-    try {
-      const response = await userApi.getOnlineUsers();
-      return response.data.map((user: any) => ({
-        id: user.id,
-        name: user.nickname || user.username,
-        avatar: user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.username}`,
-        status: 'online',
-        unreadCount: 0
-      }));
-    } catch (error) {
-      console.error('获取在线用户列表失败:', error);
-      return [];
-    }
-  }
+  // async function fetchOnlineUsers() {
+  //   try {
+  //     const response = await userApi.getOnlineUsers();
+  //     return response.data.map((user: any) => ({
+  //       id: user.id,
+  //       name: user.nickname || user.username,
+  //       avatar: user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.username}`,
+  //       status: 'online',
+  //       unreadCount: 0
+  //     }));
+  //   } catch (error) {
+  //     console.error('获取在线用户列表失败:', error);
+  //     return [];
+  //   }
+  // }
   
   // 从后端获取两个用户之间的消息
   async function fetchMessagesBetweenUsers(senderId: number, receiverId: number) {

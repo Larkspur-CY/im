@@ -1,6 +1,5 @@
 package com.im.backend.config;
 
-import com.im.backend.listener.WebSocketEventListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
