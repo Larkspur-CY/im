@@ -16,11 +16,13 @@ export class WebSocketService {
   
   connect() {
     try {
-      // 使用SockJS和STOMP建立连接
-      const socket = new SockJS(this.url);
-      
       // 获取认证token
       const token = localStorage.getItem('token');
+      
+      // 创建自定义的SockJS实例，添加token到请求头
+      const socket = new SockJS(this.url);
+      
+      // 准备STOMP连接头，包含Authorization
       const headers: Record<string, string> = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -28,7 +30,7 @@ export class WebSocketService {
       
       this.stompClient = new Client({
         webSocketFactory: () => socket,
-        connectHeaders: headers,
+        connectHeaders: headers,  // 这里传递token到连接头
         reconnectDelay: this.reconnectInterval,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
@@ -46,22 +48,6 @@ export class WebSocketService {
             // 处理接收到的消息
             const chatStore = useChatStore()
             chatStore.handleWebSocketMessage(data)
-            
-            // 如果消息来自其他用户且当前未选中该用户，则增加未读消息计数
-            if (data.from && chatStore.currentUser && data.from !== chatStore.currentUser.id) {
-              const senderId = data.from;
-              const userIndex = chatStore.users.findIndex(user => user.id === senderId);
-              
-              if (userIndex !== -1) {
-                // 如果当前未选中该用户或选中的不是发送消息的用户，则增加未读计数
-                if (!chatStore.selectedUser || chatStore.selectedUser.id !== senderId) {
-                  const updatedUsers = [...chatStore.users];
-                  const user = updatedUsers[userIndex];
-                  user.unreadCount = (user.unreadCount || 0) + 1;
-                  chatStore.users = updatedUsers;
-                }
-              }
-            }
           });
           
           // 订阅未读消息数量更新
@@ -127,9 +113,22 @@ export class WebSocketService {
   
   sendMessage(message: any) {
     if (this.stompClient && this.stompClient.connected) {
+      // 不再手动添加senderId，让后端从token中解析
       this.stompClient.publish({ destination: '/app/chat.sendMessage', body: JSON.stringify(message) });
     } else {
       console.error('STOMP未连接')
+    }
+  }
+  
+  // 添加用户到WebSocket会话
+  addUser() {
+    if (this.stompClient && this.stompClient.connected) {
+      const message = {
+        type: 'JOIN'
+      }
+      this.stompClient.publish({ destination: '/app/chat.addUser', body: JSON.stringify(message) });
+    } else {
+      console.error('STOMP未连接，无法添加用户')
     }
   }
   

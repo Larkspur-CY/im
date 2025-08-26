@@ -7,13 +7,24 @@
       :class="{ 'sent-message': message.sender === 'me', 'received-message': message.sender !== 'me' }"
     >
       <div class="message-header" v-if="message.sender !== 'me'">
-        <span class="sender-name">{{ message.senderName || '用户' }}</span>
         <span class="message-time">{{ formatTime(message.timestamp) }}</span>
       </div>
-      <div :class="['message-content', message.sender === 'me' ? 'sent' : 'received', { 'error': message.error }]">
-        {{ message.text }}
+      <div class="message-row">
+        <div class="avatar-container" v-if="message.sender !== 'me'">
+          <div class="avatar">
+            {{ getUserInitial(message.userId) }}
+          </div>
+        </div>
+        <div :class="['message-content', message.sender === 'me' ? 'sent' : 'received', { 'error': message.error }]">
+          {{ message.text }}
+        </div>
+        <div class="avatar-container" v-if="message.sender === 'me'">
+          <div class="avatar sent-avatar">
+            {{ chatStore.currentUser ? (chatStore.currentUser.nickname || chatStore.currentUser.username)?.charAt(0).toUpperCase() : 'M' }}
+          </div>
+        </div>
+        <span v-if="message.error && message.sender === 'me'" class="error-indicator" title="消息发送失败">!</span>
       </div>
-      <span v-if="message.error && message.sender === 'me'" class="error-indicator" title="消息发送失败">!</span>
       <div class="message-footer" v-if="message.sender === 'me'">
         <span class="message-time">{{ formatTime(message.timestamp) }}</span>
         <span v-if="message.error" class="error-status">发送失败</span>
@@ -23,20 +34,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUpdated } from 'vue'
+import { ref, watch, onUpdated, computed } from 'vue'
+import { useChatStore } from '../../store/chatStore'
 import '../../assets/message-list.css'
 
 interface Message {
   id: string
   text: string
   sender: 'me' | 'other'
-  senderName?: string
+  userId: string
   timestamp: Date
   error?: boolean
   errorMessage?: string
 }
 
 const props = defineProps<{ messages: Message[] }>()
+const chatStore = useChatStore()
+
+// 获取用户昵称的首字母
+const getUserInitial = (userId: string) => {
+  const user = chatStore.users.find(u => u.id === userId)
+  if (user) {
+    return (user.nickname || user.username)?.charAt(0).toUpperCase() || 'U'
+  }
+  return 'U'
+}
 
 const messageList = ref<HTMLElement | null>(null)
 

@@ -18,10 +18,13 @@ interface User {
 
 // 定义WebSocket消息类型
 interface WebSocketMessage {
+  id?: number
   type: string
   content: string
-  from?: string
-  to?: string
+  senderId?: number
+  receiverId?: number
+  sentTime?: string
+  isRead?: boolean
 }
 
 export const useChatStore = defineStore('chat', () => {
@@ -57,28 +60,49 @@ export const useChatStore = defineStore('chat', () => {
   
   // 处理WebSocket消息
   function handleWebSocketMessage(data: WebSocketMessage) {
-    if (data.type === 'message') {
-      const message: Message = {
-        id: Date.now().toString(),
-        text: data.content,
-        sender: 'other',
-        timestamp: new Date(),
-        userId: data.from || ''
-      }
-      messages.value.push(message)
-      
+    // 处理后端发送的消息
+    if (!data.senderId) {
+      console.error('收到的消息没有senderId:', data);
+      return;
+    }
+    
+    const senderId = data.senderId.toString();
+    
+    // 创建消息对象
+    const message: Message = {
+      id: data.id ? data.id.toString() : Date.now().toString(),
+      text: data.content,
+      // 判断消息是否由当前用户发送
+      // 如果senderId等于当前用户ID，则是当前用户发送的消息
+      sender: currentUser.value && senderId === currentUser.value.id ? 'me' : 'other',
+      timestamp: data.sentTime ? new Date(data.sentTime) : new Date(),
+      userId: senderId
+    }
+    
+    console.log('处理消息:', {
+      senderId: senderId,
+      currentUserId: currentUser.value?.id,
+      isSentByMe: currentUser.value && senderId === currentUser.value.id,
+      sender: message.sender
+    });
+    
+    // 添加消息到列表
+    messages.value.push(message)
+    
+    // 如果消息不是当前用户发送的（即收到了其他用户的消息）
+    if (currentUser.value && senderId !== currentUser.value.id) {
       // 检查消息是否来自当前选中的用户
-      if (selectedUser.value && data.from === selectedUser.value.id) {
-        // 重置该用户的未读消息数量
-        const userIndex = users.value.findIndex(user => user.id === data.from);
+      if (selectedUser.value && senderId === selectedUser.value.id) {
+        // 如果是当前选中的用户发来的消息，重置该用户的未读消息数量
+        const userIndex = users.value.findIndex(user => user.id === senderId);
         if (userIndex !== -1) {
           const updatedUsers = [...users.value];
           updatedUsers[userIndex].unreadCount = 0;
           users.value = updatedUsers;
         }
       } else {
-        // 增加发送用户的未读消息数量
-        const userIndex = users.value.findIndex(user => user.id === data.from);
+        // 如果不是当前选中的用户发来的消息，增加该用户的未读消息数量
+        const userIndex = users.value.findIndex(user => user.id === senderId);
         if (userIndex !== -1) {
           const updatedUsers = [...users.value];
           updatedUsers[userIndex].unreadCount = (updatedUsers[userIndex].unreadCount || 0) + 1;
@@ -158,10 +182,17 @@ export const useChatStore = defineStore('chat', () => {
       messages.value = response.data.map((msg: any) => ({
         id: msg.id.toString(),
         text: msg.content,
+        // 判断消息是否由当前用户发送
+        // 如果senderId等于当前用户ID，则是当前用户发送的消息
         sender: msg.senderId.toString() === currentUser.value?.id ? 'me' : 'other',
         timestamp: new Date(msg.sentTime),
         userId: msg.senderId.toString()
       }));
+      
+      console.log('获取消息:', {
+        messages: messages.value,
+        currentUserId: currentUser.value?.id
+      });
       
       // 重置对应用户的未读消息数量
       const userIndex = users.value.findIndex(user => user.id === receiverId);

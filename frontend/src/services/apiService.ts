@@ -14,7 +14,6 @@ const apiClient = axios.create({
 // 添加请求拦截器
 apiClient.interceptors.request.use(
   (config) => {
-    debugger
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`

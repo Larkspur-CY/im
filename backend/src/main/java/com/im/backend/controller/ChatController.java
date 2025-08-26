@@ -30,15 +30,31 @@ public class ChatController {
 
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload Map<String, Object> messagePayload, StompHeaderAccessor headerAccessor) {
-        // 从会话中获取发送者ID
-        Long senderId = (Long) headerAccessor.getSessionAttributes().get("userId");
+        // 从认证信息中获取发送者ID
+        Long senderId = null;
         
-        // 如果会话中没有userId，尝试从消息负载中获取senderId
+        // 从认证对象中获取用户ID
+        if (headerAccessor.getUser() != null) {
+            // 从认证对象中获取用户名（在我们的系统中，用户名就是用户ID）
+            String userIdStr = headerAccessor.getUser().getName();
+            try {
+                senderId = Long.valueOf(userIdStr);
+            } catch (NumberFormatException e) {
+                System.err.println("无法解析用户ID: " + userIdStr);
+            }
+        }
+        
+        // 如果无法从认证信息中获取用户ID，尝试从会话中获取
+        if (senderId == null) {
+            senderId = (Long) headerAccessor.getSessionAttributes().get("userId");
+        }
+        
+        // 如果仍然没有有效的senderId，尝试从消息负载中获取（兼容旧版本）
         if (senderId == null && messagePayload.get("senderId") != null) {
             try {
                 senderId = Long.valueOf(messagePayload.get("senderId").toString());
                 // 向这个senderId发送错误信息
-                sendErrorMessageToUser("用户未登录或会话已过期", "UNKNOWN", senderId);
+                sendErrorMessageToUser("用户未登录或会话已过期，请重新登录", "AUTH_REQUIRED", senderId);
                 return;
             } catch (NumberFormatException e) {
                 // 如果senderId格式无效，记录错误
@@ -50,7 +66,7 @@ public class ChatController {
         // 如果仍然没有有效的senderId
         if (senderId == null) {
             // 记录错误日志
-            System.err.println("无法发送消息，因为用户未登录且消息中未提供有效的senderId");
+            System.err.println("无法发送消息，因为无法确定发送者ID");
             return;
         }
 
@@ -110,20 +126,52 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.addUser")
-    public void addUser(@Payload Message message, StompHeaderAccessor headerAccessor) {
+    public void addUser(@Payload Map<String, Object> payload, StompHeaderAccessor headerAccessor) {
+        // 从认证信息中获取用户ID
+        Long userId = null;
+        
+        // 从认证对象中获取用户ID
+        if (headerAccessor.getUser() != null) {
+            // 从认证对象中获取用户名（在我们的系统中，用户名就是用户ID）
+            String userIdStr = headerAccessor.getUser().getName();
+            try {
+                userId = Long.valueOf(userIdStr);
+            } catch (NumberFormatException e) {
+                System.err.println("无法解析用户ID: " + userIdStr);
+            }
+        }
+        
+        // 如果无法从认证信息中获取用户ID，尝试从消息负载中获取（兼容旧版本）
+        if (userId == null && payload.get("senderId") != null) {
+            try {
+                userId = Long.valueOf(payload.get("senderId").toString());
+            } catch (NumberFormatException e) {
+                System.err.println("无效的用户ID格式: " + payload.get("senderId"));
+                return;
+            }
+        }
+        
+        // 如果仍然没有有效的userId
+        if (userId == null) {
+            System.err.println("无法添加用户，因为无法确定用户ID");
+            return;
+        }
+        
         // 将用户ID存储到会话中
-        headerAccessor.getSessionAttributes().put("userId", message.getSenderId());
-
-        // 用户上线通知
+        headerAccessor.getSessionAttributes().put("userId", userId);
+        
+        // 创建消息对象
+        Message message = new Message();
+        message.setSenderId(userId);
         message.setType(Message.MessageType.TEXT);
-        message.setContent("用户 " + message.getSenderId() + " 已上线");
+        message.setContent("用户 " + userId + " 已上线");
         message.setSentTime(LocalDateTime.now());
-
+        
         // 广播用户上线消息
         messagingTemplate.convertAndSend("/topic/public", message);
-
+        
         // 更新用户在线状态
-        userService.setUserOnline(message.getSenderId(), true);
+        userService.setUserOnline(userId, true);
     }
 
     public void sendUnreadCountUpdate(Long userId, Long senderId, Long unreadCount) {

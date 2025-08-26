@@ -31,12 +31,11 @@ import '../assets/chat.css'
 
 const chatStore = useChatStore()
 
-// 模拟登录用户（实际应用中应该从登录接口获取）
-const mockCurrentUser = {
-  id: '1',
-  username: 'admin',
-  nickname: '管理员'
-}
+// 导入路由和认证服务
+import { authService } from '../services/authService'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const selectUser = async (user: any) => {
   chatStore.setSelectedUser(user)
@@ -117,11 +116,28 @@ const handleSendMessage = async (messageText: string) => {
 }
 
 onMounted(async () => {
-  // 设置当前用户
-  chatStore.setCurrentUser(mockCurrentUser)
+  // 获取并设置当前用户
+  const authUser = authService.getCurrentUser()
   
-  // 获取用户列表（带未读消息数量）
-  await chatStore.fetchUsers(mockCurrentUser.id)
+  if (authUser) {
+    // 将 authService 的 User 类型转换为 chatStore 使用的 User 类型
+    const userForStore = {
+      id: authUser.id.toString(), // 将 number 转换为 string
+      username: authUser.username,
+      nickname: authUser.nickname || '',
+      email: authUser.email
+    }
+    
+    // 设置当前用户
+    chatStore.setCurrentUser(userForStore)
+    
+    // 获取用户列表（带未读消息数量）
+    await chatStore.fetchUsers(userForStore.id)
+  } else {
+    console.error('用户未登录')
+    // 重定向到登录页面
+    router.push('/login')
+  }
   
   // 初始化WebSocket连接
   websocketService.connect()
