@@ -1,41 +1,49 @@
 .user-list {
-  width: 250px;
+  width: 280px;
   border-right: 1px solid #e0e0e0;
-  padding: 20px;
   height: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  background-color: #f8f9fa;
 }
 
 .user-list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eaeaea;
+  background-color: #fff;
 }
 
 .user-list h3 {
-  margin-top: 0;
-  margin-bottom: 0;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  position: relative;
+  padding-left: 12px;
+  border-left: 4px solid #3498db;
 }
 
 .logout-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ff4757 0%, #e74c3c 100%);
   color: white;
   border: none;
   padding: 8px 16px;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
 }
 
 .logout-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+  background: linear-gradient(135deg, #ff5e6a 0%, #e74c3c 100%);
 }
 
 .logout-button:active {
@@ -44,58 +52,86 @@
 
 .user-list ul {
   list-style: none;
-  padding: 0;
+  padding: 10px;
   margin: 0;
   flex: 1;
   overflow-y: auto;
 }
 
 .user-list li {
-  padding: 12px;
+  padding: 12px 15px;
   cursor: pointer;
-  border-radius: 12px;
-  margin-bottom: 8px;
+  border-radius: 10px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-left: 3px solid transparent;
 }
 
 .user-list li:hover {
-  background-color: #f0f0f0;
+  background-color: #f0f2f5;
   transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  border-left: 3px solid #3498db;
 }
 
 .user-list li.active {
-  background-color: #0084ff;
-  color: white;
+  background: #f0f7ff;
+  color: #333;
+  box-shadow: 0 2px 5px rgba(52, 152, 219, 0.15);
+  border-left: 3px solid #3498db;
+}
+
+.user-list li.active .status-text {
+  color: #3498db;
+  font-weight: 500;
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  font-size: 18px;
   color: white;
   margin-right: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
 }
 
 .user-info {
   flex: 1;
+  min-width: 0; /* 防止内容溢出 */
 }
 
 .user-name {
-  font-weight: 500;
-  margin-bottom: 4px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.name-text {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 15px;
 }
 
 .user-status {
   display: flex;
   align-items: center;
+  color: #666;
 }
 
 .status-indicator {
@@ -103,10 +139,12 @@
   height: 8px;
   border-radius: 50%;
   margin-right: 6px;
+  flex-shrink: 0;
 }
 
 .status-indicator.online {
   background-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
 .status-indicator.offline {
@@ -121,12 +159,14 @@
 .unread-count {
   background-color: #ff4757;
   color: white;
-  border-radius: 50%;
-  padding: 2px 6px;
+  border-radius: 12px;
+  padding: 2px 8px;
   font-size: 12px;
   margin-left: 8px;
   display: inline-block;
   min-width: 18px;
   text-align: center;
-  line-height: 1;
+  line-height: 1.2;
+  box-shadow: 0 2px 4px rgba(255, 71, 87, 0.3);
+  font-weight: 600;
 }

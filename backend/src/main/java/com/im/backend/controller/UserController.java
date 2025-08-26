@@ -3,6 +3,7 @@ package com.im.backend.controller;
 import com.im.backend.dto.*;
 import com.im.backend.model.User;
 import com.im.backend.service.UserService;
+import com.im.backend.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,12 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @GetMapping("/with-unread-count/{currentUserId}")
-    public ResponseEntity<List<UserWithUnreadCountDTO>> getAllUsersWithUnreadCount(@PathVariable Long currentUserId) {
+    @GetMapping("/with-unread-count")
+    public ResponseEntity<List<UserWithUnreadCountDTO>> getAllUsersWithUnreadCount() {
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null) {
+            return ResponseEntity.status(401).build(); // 未授权
+        }
         List<UserWithUnreadCountDTO> usersWithUnreadCount = userService.getAllUsersWithUnreadCount(currentUserId);
         return ResponseEntity.ok(usersWithUnreadCount);
     }

@@ -54,7 +54,7 @@ export const userApi = {
   getOnlineUsers: () => apiClient.get('/users/online'),
   
   // 获取带未读数量的用户列表
-  getWithUnreadCount: (userId: string) => apiClient.get(`/users/with-unread-count/${userId}`),
+  getWithUnreadCount: () => apiClient.get('/users/with-unread-count'),
   
   // 验证用户邮箱（用于忘记密码）
   verifyUserEmail: (data: any) => apiClient.post('/open/verify-email', data),

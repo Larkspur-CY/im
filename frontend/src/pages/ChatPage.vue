@@ -132,7 +132,7 @@ onMounted(async () => {
     chatStore.setCurrentUser(userForStore)
     
     // 获取用户列表（带未读消息数量）
-    await chatStore.fetchUsers(userForStore.id)
+    await chatStore.fetchUsers(true)
   } else {
     console.error('用户未登录')
     // 重定向到登录页面

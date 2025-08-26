@@ -32,10 +32,13 @@ public class UserService {
     
     public List<UserWithUnreadCountDTO> getAllUsersWithUnreadCount(Long currentUserId) {
         List<User> users = userRepository.findAll();
-        return users.stream().map(user -> {
-            Long unreadCount = messageService.getUnreadMessageCountBetweenUsers(user.getId(), currentUserId);
-            return new UserWithUnreadCountDTO(user, unreadCount);
-        }).collect(Collectors.toList());
+        // 过滤掉当前登录用户
+        return users.stream()
+            .filter(user -> !user.getId().equals(currentUserId))
+            .map(user -> {
+                Long unreadCount = messageService.getUnreadMessageCountBetweenUsers(user.getId(), currentUserId);
+                return new UserWithUnreadCountDTO(user, unreadCount);
+            }).collect(Collectors.toList());
     }
 
     public User getUserById(Long id) {

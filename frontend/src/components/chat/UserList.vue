@@ -15,7 +15,8 @@
           {{ (user.nickname || user.username)?.charAt(0).toUpperCase() }}
         </div>
         <div class="user-info">
-          <div class="user-name">{{ user.nickname || user.username }}
+          <div class="user-name">
+            <span class="name-text">{{ user.nickname || user.username }}</span>
             <span v-if="user.unreadCount && user.unreadCount > 0" class="unread-count">
               {{ user.unreadCount }}
             </span>

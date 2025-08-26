@@ -123,11 +123,11 @@ export const useChatStore = defineStore('chat', () => {
   }
   
   // 从后端获取用户列表
-  async function fetchUsers(currentUserId?: string) {
+  async function fetchUsers(withUnreadCount: boolean = false) {
     try {
-      if (currentUserId) {
+      if (withUnreadCount) {
         // 使用axios获取带未读数量的用户数据
-        const response = await userApi.getWithUnreadCount(currentUserId);
+        const response = await userApi.getWithUnreadCount();
         
         // 处理带未读数量的用户数据
         users.value = response.data.map((item: any) => ({
