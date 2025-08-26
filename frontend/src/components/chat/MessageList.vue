@@ -9,6 +9,9 @@
       <div class="message-header" v-if="message.sender !== 'me'">
         <span class="message-time">{{ formatTime(message.timestamp) }}</span>
       </div>
+      <div class="message-header sent-header" v-if="message.sender === 'me'">
+        <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+      </div>
       <div class="message-row">
         <div class="avatar-container" v-if="message.sender !== 'me'">
           <div class="avatar">
@@ -25,9 +28,8 @@
         </div>
         <span v-if="message.error && message.sender === 'me'" class="error-indicator" title="消息发送失败">!</span>
       </div>
-      <div class="message-footer" v-if="message.sender === 'me'">
-        <span class="message-time">{{ formatTime(message.timestamp) }}</span>
-        <span v-if="message.error" class="error-status">发送失败</span>
+      <div class="message-footer" v-if="message.sender === 'me' && message.error">
+        <span class="error-status">发送失败</span>
       </div>
     </div>
   </div>
