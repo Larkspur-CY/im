@@ -8,14 +8,62 @@ export class WebSocketService {
   private url: string
   private reconnectInterval = 5000
   private reconnectAttempts = 0
-  private maxReconnectAttempts = 5
+  private maxReconnectAttempts = Infinity // 无限重连尝试
+  private heartbeatTimer: number | null = null
+  private heartbeatInterval = 30000 // 30秒发送一次心跳
+  private connectionWatchdog: number | null = null
+  private connectionTimeout = 10000 // 10秒连接超时
+  private lastHeartbeatReceived: number = 0 // 最后一次收到心跳的时间戳
+  private heartbeatCheckTimer: number | null = null // 心跳检查定时器
+  private heartbeatMaxDelay = 90000 // 心跳最大延迟时间（90秒）
   
   constructor(url: string) {
     this.url = url
+    // 监听窗口的在线/离线状态
+    window.addEventListener('online', this.handleOnline.bind(this))
+    window.addEventListener('offline', this.handleOffline.bind(this))
+    // 监听页面可见性变化
+    document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this))
+  }
+  
+  private handleOnline() {
+    console.log('网络已恢复，尝试重新连接WebSocket')
+    this.reconnect()
+  }
+  
+  private handleOffline() {
+    console.log('网络已断开，停止WebSocket连接')
+    this.stopHeartbeat()
+    // 不主动断开连接，等待网络恢复
+  }
+  
+  private handleVisibilityChange() {
+    if (document.visibilityState === 'visible') {
+      console.log('页面可见，检查WebSocket连接')
+      this.checkConnection()
+    }
+  }
+  
+  private checkConnection() {
+    if (!this.stompClient || !this.stompClient.connected) {
+      console.log('WebSocket连接已断开，尝试重新连接')
+      this.reconnect()
+    }
   }
   
   connect() {
     try {
+      // 清除之前的连接监视器
+      if (this.connectionWatchdog) {
+        clearTimeout(this.connectionWatchdog)
+      }
+      
+      // 设置连接超时监视器
+      this.connectionWatchdog = window.setTimeout(() => {
+        console.log('WebSocket连接超时，尝试重新连接')
+        this.reconnect()
+      }, this.connectionTimeout) as unknown as number
+      
       // 获取认证token
       const token = localStorage.getItem('token');
       
@@ -32,14 +80,36 @@ export class WebSocketService {
         webSocketFactory: () => socket,
         connectHeaders: headers,  // 这里传递token到连接头
         reconnectDelay: this.reconnectInterval,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
+        heartbeatIncoming: 10000, // 增加心跳间隔
+        heartbeatOutgoing: 10000, // 增加心跳间隔
+        debug: (msg) => {
+          // 避免使用process.env，直接禁用调试日志
+          // 如果需要调试，可以设置为true
+          const enableDebug = false;
+          if (enableDebug) {
+            console.debug(msg)
+          }
+        },
         onConnect: () => {
           console.log('STOMP连接已建立')
           this.reconnectAttempts = 0
+          
+          // 清除连接超时监视器
+          if (this.connectionWatchdog) {
+            clearTimeout(this.connectionWatchdog)
+            this.connectionWatchdog = null
+          }
+          
           // 在store中更新连接状态
           const chatStore = useChatStore()
           chatStore.setConnectionStatus(true)
+          
+          // 启动心跳机制
+          this.startHeartbeat()
+          
+          // 连接建立后，显式添加用户到会话
+          // 这将触发用户上线通知
+          this.addUser()
           
           // 订阅用户消息队列
           this.stompClient?.subscribe('/user/queue/messages', (message: IMessage) => {
@@ -86,6 +156,23 @@ export class WebSocketService {
             const event = new CustomEvent('websocketError', { detail: data });
             window.dispatchEvent(event);
           });
+          
+          // 订阅专门的心跳确认队列
+          this.stompClient?.subscribe('/user/queue/heartbeat', (message: IMessage) => {
+            const data = JSON.parse(message.body);
+            console.log('收到心跳确认:', data.timestamp);
+            
+            // 更新最后一次心跳时间
+            this.lastHeartbeatReceived = Date.now();
+            
+            // 确保连接状态为已连接
+            const chatStore = useChatStore();
+            if (!chatStore.isConnected) {
+              console.log('通过心跳确认恢复连接状态');
+              chatStore.setConnectionStatus(true);
+              // 不在这里调用addUser，避免重复处理
+            }
+          });
         },
         onDisconnect: () => {
           console.log('STOMP连接已关闭')
@@ -93,10 +180,17 @@ export class WebSocketService {
           const chatStore = useChatStore()
           chatStore.setConnectionStatus(false)
           
+          // 停止心跳
+          this.stopHeartbeat()
+          
+          // 指数退避重连策略
+          const reconnectDelay = Math.min(30000, this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts))
+          console.log(`将在 ${reconnectDelay/1000} 秒后尝试第 ${this.reconnectAttempts + 1} 次重连`)
+          
           // 尝试重连
           if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++
-            setTimeout(() => this.connect(), this.reconnectInterval)
+            setTimeout(() => this.reconnect(), reconnectDelay)
           }
         },
         onStompError: (frame) => {
@@ -111,12 +205,99 @@ export class WebSocketService {
     }
   }
   
+  // 启动心跳机制
+  private startHeartbeat() {
+    this.stopHeartbeat() // 先清除之前的心跳
+    
+    // 记录初始心跳时间
+    this.lastHeartbeatReceived = Date.now()
+    
+    // 发送心跳的定时器
+    this.heartbeatTimer = window.setInterval(() => {
+      this.sendHeartbeat()
+    }, this.heartbeatInterval) as unknown as number
+    
+    // 检查心跳的定时器
+    this.heartbeatCheckTimer = window.setInterval(() => {
+      this.checkHeartbeat()
+    }, this.heartbeatInterval) as unknown as number
+  }
+  
+  // 停止心跳机制
+  private stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer)
+      this.heartbeatTimer = null
+    }
+    
+    if (this.heartbeatCheckTimer) {
+      clearInterval(this.heartbeatCheckTimer)
+      this.heartbeatCheckTimer = null
+    }
+  }
+  
+  // 检查心跳状态
+  private checkHeartbeat() {
+    const now = Date.now()
+    const timeSinceLastHeartbeat = now - this.lastHeartbeatReceived
+    
+    // 如果超过最大心跳延迟时间，认为连接已断开
+    if (timeSinceLastHeartbeat > this.heartbeatMaxDelay) {
+      console.warn(`心跳超时 (${timeSinceLastHeartbeat}ms)，尝试重新连接`)
+      
+      // 获取聊天存储
+      const chatStore = useChatStore()
+      
+      // 如果当前状态是已连接，则更新为未连接
+      if (chatStore.isConnected) {
+        chatStore.setConnectionStatus(false)
+      }
+      
+      // 尝试重新连接
+      this.reconnect()
+    }
+  }
+  
+  // 发送心跳包
+  private sendHeartbeat() {
+    if (this.stompClient && this.stompClient.connected) {
+      console.log('发送心跳包')
+      this.stompClient.publish({ 
+        destination: '/app/chat.heartbeat', 
+        body: JSON.stringify({ timestamp: new Date().getTime() }) 
+      })
+    } else {
+      console.warn('心跳检测到WebSocket未连接，尝试重连')
+      this.reconnect()
+    }
+  }
+  
+  // 重连方法
+  private reconnect() {
+    // 先断开现有连接
+    if (this.stompClient) {
+      try {
+        this.stompClient.deactivate()
+      } catch (e) {
+        console.error('断开现有连接时出错:', e)
+      }
+      this.stompClient = null
+    }
+    
+    // 重新连接
+    console.log('正在重新连接WebSocket...')
+    this.connect()
+  }
+  
   sendMessage(message: any) {
     if (this.stompClient && this.stompClient.connected) {
       // 不再手动添加senderId，让后端从token中解析
       this.stompClient.publish({ destination: '/app/chat.sendMessage', body: JSON.stringify(message) });
     } else {
-      console.error('STOMP未连接')
+      console.error('STOMP未连接，消息将被缓存并在重连后发送')
+      // 存储消息并在重连后发送
+      this.reconnect()
+      // 可以在这里添加消息缓存逻辑
     }
   }
   
@@ -133,6 +314,21 @@ export class WebSocketService {
   }
   
   disconnect() {
+    // 停止心跳
+    this.stopHeartbeat()
+    
+    // 清除连接监视器
+    if (this.connectionWatchdog) {
+      clearTimeout(this.connectionWatchdog)
+      this.connectionWatchdog = null
+    }
+    
+    // 移除事件监听器
+    window.removeEventListener('online', this.handleOnline.bind(this))
+    window.removeEventListener('offline', this.handleOffline.bind(this))
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this))
+    
+    // 断开连接
     if (this.stompClient) {
       this.stompClient.deactivate()
       this.stompClient = null

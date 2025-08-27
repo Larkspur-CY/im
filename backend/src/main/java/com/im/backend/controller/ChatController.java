@@ -4,6 +4,7 @@ import com.im.backend.model.Message;
 import com.im.backend.service.UserService;
 import com.im.backend.service.MessageService;
 import com.im.backend.model.User;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -15,10 +16,19 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import com.im.backend.util.WebSocketUtils;
 
 @Controller
+@EnableScheduling
 public class ChatController {
-
+    // 存储用户最后心跳时间的Map
+    private final ConcurrentHashMap<Long, Long> lastHeartbeatTimes = new ConcurrentHashMap<>();
+    
+    // 心跳超时时间（毫秒）
+    private static final long HEARTBEAT_TIMEOUT = 120000; // 2分钟
+    
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
@@ -153,37 +163,71 @@ public class ChatController {
         }
     }
 
+    /**
+     * 处理客户端心跳请求
+     */
+    @MessageMapping("/chat.heartbeat")
+    public void handleHeartbeat(@Payload Map<String, Object> payload, StompHeaderAccessor headerAccessor) {
+        // 从认证信息中获取用户ID
+        Long userId = WebSocketUtils.extractUserId(headerAccessor);
+        
+        if (userId != null) {
+            // 更新用户的最后心跳时间
+            lastHeartbeatTimes.put(userId, System.currentTimeMillis());
+            
+            // 发送心跳响应
+            Map<String, Object> response = new HashMap<>();
+            response.put("type", "HEARTBEAT_ACK");
+            response.put("timestamp", System.currentTimeMillis());
+            
+            // 使用专门的心跳队列
+            messagingTemplate.convertAndSendToUser(
+                userId.toString(),
+                "/queue/heartbeat",
+                response
+            );
+            
+            // 静默更新用户在线状态，但不发送通知
+            // 这样可以确保用户在心跳期间保持在线状态
+            userService.setUserOnline(userId, true);
+        }
+    }
+    
+    /**
+     * 检查心跳超时的用户
+     * 每分钟执行一次
+     */
+    @Scheduled(fixedRate = 60000)
+    public void checkHeartbeats() {
+        long currentTime = System.currentTimeMillis();
+        
+        // 检查每个用户的最后心跳时间
+        lastHeartbeatTimes.forEach((userId, lastHeartbeat) -> {
+            if (currentTime - lastHeartbeat > HEARTBEAT_TIMEOUT) {
+                // 用户心跳超时，标记为离线
+                userService.setUserOnline(userId, false);
+                // 从心跳Map中移除
+                lastHeartbeatTimes.remove(userId);
+                // 通知其他用户状态变更
+                notifyOnlineUsers();
+            }
+        });
+    }
+    
+
     @MessageMapping("/chat.addUser")
     public void addUser(@Payload Map<String, Object> payload, StompHeaderAccessor headerAccessor) {
-        // 从认证信息中获取用户ID
-        Long userId = null;
-        
-        // 从认证对象中获取用户ID
-        if (headerAccessor.getUser() != null) {
-            // 从认证对象中获取用户名（在我们的系统中，用户名就是用户ID）
-            String userIdStr = headerAccessor.getUser().getName();
-            try {
-                userId = Long.valueOf(userIdStr);
-            } catch (NumberFormatException e) {
-                System.err.println("无法解析用户ID: " + userIdStr);
-            }
-        }
-        
-        // 如果无法从认证信息中获取用户ID，尝试从消息负载中获取（兼容旧版本）
-        if (userId == null && payload.get("senderId") != null) {
-            try {
-                userId = Long.valueOf(payload.get("senderId").toString());
-            } catch (NumberFormatException e) {
-                System.err.println("无效的用户ID格式: " + payload.get("senderId"));
-                return;
-            }
-        }
+        // 使用通用方法提取用户ID
+        Long userId = WebSocketUtils.extractUserId(headerAccessor);
         
         // 如果仍然没有有效的userId
         if (userId == null) {
             System.err.println("无法添加用户，因为无法确定用户ID");
             return;
         }
+        
+        // 记录用户的心跳时间
+        lastHeartbeatTimes.put(userId, System.currentTimeMillis());
         
         // 将用户ID存储到会话中
         headerAccessor.getSessionAttributes().put("userId", userId);
