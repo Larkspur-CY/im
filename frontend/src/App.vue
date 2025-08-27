@@ -1,9 +1,10 @@
 <script setup lang="ts">
-// 移除HelloWorld组件的导入，因为我们现在使用路由
+import ThemeToggle from './components/ThemeToggle.vue'
 </script>
 
 <template>
   <div id="app">
+    <ThemeToggle />
     <router-view />
   </div>
 </template>

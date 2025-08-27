@@ -142,7 +142,7 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { authService } from "../services/authService";
 import { userApi } from "../services/apiService";
-import { initParticles } from "../assets/particles";
+import { initParticles, updateParticleTheme } from "../assets/particles";
 import "../assets/login.css";
 
 const router = useRouter();
@@ -283,36 +283,37 @@ if (rememberedUsername) {
   rememberMe.value = true;
 }
 
-// 用于存储事件监听器引用
-let darkModeMediaQuery: MediaQueryList;
-let handleDarkModeChange: (e: MediaQueryListEvent) => void;
-
 // 初始化粒子背景
 onMounted(() => {
-  // 检测是否为深色模式
-  const prefersDarkMode =
-    window.matchMedia &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const colorScheme = prefersDarkMode ? "dark" : "light";
-
+  // 检测当前主题
+  const currentTheme = document.documentElement.getAttribute('data-theme') as 'dark' | 'light' | null;
+  
   // 初始化粒子动画
-  initParticles("particles-canvas", 80, colorScheme);
+  initParticles("particles-canvas", 80, currentTheme === 'dark' ? 'dark' : 'light');
 
-  // 监听深色模式变化
-  darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  handleDarkModeChange = (e: MediaQueryListEvent) => {
-    const newColorScheme = e.matches ? "dark" : "light";
-    // 重新初始化粒子动画
-    initParticles("particles-canvas", 80, newColorScheme);
-  };
+  // 监听主题变化
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+        const newTheme = document.documentElement.getAttribute('data-theme') as 'dark' | 'light' | null;
+        // 更新粒子主题而不是重新初始化
+        updateParticleTheme(newTheme === 'dark' ? 'dark' : 'light');
+      }
+    });
+  });
 
-  darkModeMediaQuery.addEventListener("change", handleDarkModeChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
 });
 
 // 组件卸载时清理事件监听器
 onUnmounted(() => {
-  if (darkModeMediaQuery && handleDarkModeChange) {
-    darkModeMediaQuery.removeEventListener("change", handleDarkModeChange);
+  const observer = (window as any).themeObserver;
+  if (observer) {
+    observer.disconnect();
+    delete (window as any).themeObserver;
   }
 });
 </script>

@@ -1,11 +1,11 @@
 <template>
-  <div class="login-container">
-    <div class="login-box">
-      <div class="login-header">
+  <div class="register-container">
+    <div class="register-box">
+      <div class="register-header">
         <h2>创建账号</h2>
         <p>加入即时通讯系统</p>
       </div>
-      <div class="login-form">
+      <div class="register-form">
         <div class="form-group">
           <label for="username">用户名</label>
           <input 

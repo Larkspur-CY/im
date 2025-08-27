@@ -1,5 +1,6 @@
 <template>
   <div class="chat-container">
+    <ThemeToggle />
     <UserList 
       :users="chatStore.users" 
       :selected-user="chatStore.selectedUser" 
