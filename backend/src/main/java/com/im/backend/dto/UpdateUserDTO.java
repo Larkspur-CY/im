@@ -7,4 +7,5 @@ public class UpdateUserDTO {
     private String nickname;
     private String avatar;
     private String email;
+    private Boolean showReadStatus;
 }

@@ -126,6 +126,9 @@ public class UserService {
             if (userDto.getEmail() != null) {
                 user.setEmail(userDto.getEmail());
             }
+            if (userDto.getShowReadStatus() != null) {
+                user.setShowReadStatus(userDto.getShowReadStatus());
+            }
             
             user.setUpdatedTime(LocalDateTime.now());
             return userRepository.save(user);

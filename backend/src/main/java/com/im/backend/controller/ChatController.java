@@ -246,19 +246,25 @@ public class ChatController {
             // 通知当前用户更新未读消息数量
             sendUnreadCountUpdate(currentUserId, senderId, unreadCount);
             
-            // 可选：向发送者发送已读回执
-            Map<String, Object> readReceipt = new HashMap<>();
-            readReceipt.put("type", "READ_RECEIPT");
-            readReceipt.put("readerId", currentUserId);
-            readReceipt.put("timestamp", System.currentTimeMillis());
-            
-            messagingTemplate.convertAndSendToUser(
-                senderId.toString(),
-                "/queue/read-receipts",
-                readReceipt
-            );
-            
-            System.out.println("用户 " + currentUserId + " 已将来自用户 " + senderId + " 的所有消息标记为已读");
+            // 检查消息发送者是否允许接收已读回执
+            User sender = userService.getUserById(senderId);
+            if (sender != null && sender.getShowReadStatus()) {
+                // 向发送者发送已读回执
+                Map<String, Object> readReceipt = new HashMap<>();
+                readReceipt.put("type", "READ_RECEIPT");
+                readReceipt.put("readerId", currentUserId);
+                readReceipt.put("timestamp", System.currentTimeMillis());
+                
+                messagingTemplate.convertAndSendToUser(
+                    senderId.toString(),
+                    "/queue/read-receipts",
+                    readReceipt
+                );
+                
+                System.out.println("用户 " + currentUserId + " 已将来自用户 " + senderId + " 的所有消息标记为已读，并发送已读回执");
+            } else {
+                System.out.println("用户 " + currentUserId + " 已将来自用户 " + senderId + " 的所有消息标记为已读，但未发送已读回执（已禁用）");
+            }
         } catch (Exception e) {
             // 发送错误信息给前端
             sendErrorMessage("标记消息为已读失败: " + e.getMessage(), "MARK_READ_ERROR", headerAccessor);

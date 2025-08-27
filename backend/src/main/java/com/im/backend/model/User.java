@@ -37,6 +37,9 @@ public class User {
     @Column(name = "is_online")
     private Boolean isOnline = false;
     
+    @Column(name = "show_read_status")
+    private Boolean showReadStatus = false;
+    
     @Column(name = "last_login_time")
     private LocalDateTime lastLoginTime;
     
