@@ -4,6 +4,7 @@ import { ref } from 'vue'
 // 引入API服务
 import { userApi, messageApi } from '../services/apiService'
 import type { Message } from '../services/apiService'
+import { websocketService } from '../services/websocketService'
 
 // 定义用户类型
 interface User {
@@ -40,7 +41,7 @@ export const useChatStore = defineStore('chat', () => {
   // WebSocket连接状态
   const isConnected = ref(false)
   
-  // 当前用户（模拟登录用户）
+  // 当前用户
   const currentUser = ref<User | null>(null)
   
   // 设置当前用户
@@ -51,6 +52,19 @@ export const useChatStore = defineStore('chat', () => {
   // 设置选中的用户
   function setSelectedUser(user: User | null) {
     selectedUser.value = user
+    
+    // 如果选择了用户，通知后端将该用户发送的消息标记为已读
+    if (user) {
+      websocketService.markMessagesAsRead(user.id)
+      
+      // 重置该用户的未读消息数量
+      const userIndex = users.value.findIndex(u => u.id === user.id)
+      if (userIndex !== -1) {
+        const updatedUsers = [...users.value]
+        updatedUsers[userIndex].unreadCount = 0
+        users.value = updatedUsers
+      }
+    }
   }
   
   // 添加消息
@@ -149,6 +163,9 @@ export const useChatStore = defineStore('chat', () => {
           updatedUsers[userIndex].unreadCount = 0;
           users.value = updatedUsers;
         }
+        
+        // 通知后端将消息标记为已读
+        websocketService.markMessagesAsRead(senderId);
       } else {
         // 如果不是当前选中的用户发来的消息，只增加未读消息数量，不添加到当前消息列表
         console.log('收到非当前选中用户的消息，更新未读数量:', {
@@ -264,6 +281,9 @@ export const useChatStore = defineStore('chat', () => {
         updatedUsers[senderUserIndex].unreadCount = unreadResponse.data;
         users.value = updatedUsers;
       }
+      
+      // 通知后端将消息标记为已读
+      websocketService.markMessagesAsRead(senderId);
     } catch (error) {
       console.error('获取消息失败:', error);
     }

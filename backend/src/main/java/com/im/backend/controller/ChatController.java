@@ -219,6 +219,51 @@ public class ChatController {
         // 更新用户在线状态
         userService.setUserOnline(userId, true);
     }
+    
+    /**
+     * 处理标记消息为已读的请求
+     */
+    @MessageMapping("/chat.markAsRead")
+    public void markMessagesAsRead(@Payload Map<String, Object> payload, StompHeaderAccessor headerAccessor) {
+        // 从认证信息中获取当前用户ID（接收者）
+        Long currentUserId = WebSocketUtils.extractUserId(headerAccessor);
+        
+        if (currentUserId == null) {
+            System.err.println("无法标记消息为已读，因为无法确定当前用户ID");
+            return;
+        }
+        
+        try {
+            // 获取发送者ID
+            Long senderId = Long.valueOf(payload.get("senderId").toString());
+            
+            // 将该发送者发送给当前用户的所有未读消息标记为已读
+            messageService.markAllMessagesAsRead(senderId, currentUserId);
+            
+            // 获取更新后的未读消息数量（应该为0）
+            long unreadCount = messageService.getUnreadMessageCountBetweenUsers(senderId, currentUserId);
+            
+            // 通知当前用户更新未读消息数量
+            sendUnreadCountUpdate(currentUserId, senderId, unreadCount);
+            
+            // 可选：向发送者发送已读回执
+            Map<String, Object> readReceipt = new HashMap<>();
+            readReceipt.put("type", "READ_RECEIPT");
+            readReceipt.put("readerId", currentUserId);
+            readReceipt.put("timestamp", System.currentTimeMillis());
+            
+            messagingTemplate.convertAndSendToUser(
+                senderId.toString(),
+                "/queue/read-receipts",
+                readReceipt
+            );
+            
+            System.out.println("用户 " + currentUserId + " 已将来自用户 " + senderId + " 的所有消息标记为已读");
+        } catch (Exception e) {
+            // 发送错误信息给前端
+            sendErrorMessage("标记消息为已读失败: " + e.getMessage(), "MARK_READ_ERROR", headerAccessor);
+        }
+    }
 
     public void sendUnreadCountUpdate(Long userId, Long senderId, Long unreadCount) {
         // 通知用户更新未读消息数量

@@ -13,6 +13,7 @@
         <span class="message-time">{{ formatTime(message.timestamp) }}</span>
         <span v-if="message.pending" class="pending-status">发送中...</span>
         <span v-else-if="message.confirmed && showConfirmedStatus[message.id]" class="confirmed-status">已送达</span>
+        <span v-else-if="message.isRead" class="read-status">已读</span>
       </div>
       <div class="message-row">
         <div class="avatar-container" v-if="message.sender !== 'me'">
@@ -41,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUpdated, reactive } from 'vue'
+import { ref, watch, onUpdated, reactive, onMounted, onUnmounted } from 'vue'
 import { useChatStore } from '../../store/chatStore'
 import '../../assets/message-list.css'
 
@@ -55,6 +56,7 @@ interface Message {
   errorMessage?: string
   pending?: boolean
   confirmed?: boolean
+  isRead?: boolean
 }
 
 const props = defineProps<{ messages: Message[] }>()
@@ -64,19 +66,24 @@ const chatStore = useChatStore()
 const showConfirmedStatus = reactive<Record<number, boolean>>({})
 
 // 监听消息状态变化
-watch(() => props.messages, (newMessages) => {
+watch(() => props.messages, (newMessages, oldMessages) => {
   // 检查新确认的消息
   newMessages.forEach(message => {
-    if (message.confirmed && !message.error && !showConfirmedStatus[message.id]) {
+    // 找到对应的旧消息
+    const oldMessage = oldMessages?.find(m => m.id === message.id);
+    
+    // 只有当消息从未确认状态变为已确认状态时，才显示"已送达"
+    if (message.confirmed && !message.error && 
+        (!oldMessage || (oldMessage && !oldMessage.confirmed))) {
       // 新确认的消息，显示"已送达"状态
-      showConfirmedStatus[message.id] = true
+      showConfirmedStatus[message.id] = true;
       
       // 3秒后隐藏"已送达"状态
       setTimeout(() => {
-        showConfirmedStatus[message.id] = false
-      }, 3000)
+        showConfirmedStatus[message.id] = false;
+      }, 3000);
     }
-  })
+  });
 }, { deep: true })
 
 // 获取用户昵称的首字母
@@ -117,6 +124,44 @@ const retryMessage = (messageId: number) => {
   const event = new CustomEvent('retryMessage', { detail: { messageId } });
   window.dispatchEvent(event);
 }
+
+// 处理已读回执事件
+const handleMessagesRead = (event: CustomEvent) => {
+  const { readerId } = event.detail;
+  
+  // 更新所有发送给该读者的消息为已读状态
+  if (chatStore.selectedUser && chatStore.selectedUser.id === readerId) {
+    const updatedMessages = [...props.messages];
+    let hasChanges = false;
+    
+    // 更新所有发送给该读者的消息为已读
+    for (let i = 0; i < updatedMessages.length; i++) {
+      const message = updatedMessages[i];
+      if (message.sender === 'me' && !message.isRead) {
+        // 将消息标记为已读
+        updatedMessages[i] = {
+          ...message,
+          isRead: true
+        };
+        hasChanges = true;
+      }
+    }
+    
+    // 只有当有消息状态变化时才更新消息列表
+    if (hasChanges) {
+      chatStore.messages = updatedMessages;
+    }
+  }
+};
+
+// 添加和移除事件监听器
+onMounted(() => {
+  window.addEventListener('messagesRead', handleMessagesRead as EventListener);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('messagesRead', handleMessagesRead as EventListener);
+});
 
 // 当消息列表更新时，自动滚动到底部
 onUpdated(() => {

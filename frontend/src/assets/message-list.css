@@ -184,6 +184,12 @@
   font-weight: 500;
 }
 
+.read-status {
+  color: #3498db;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .retry-button {
   background-color: #ff4757;
   color: white;

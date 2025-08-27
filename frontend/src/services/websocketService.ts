@@ -128,7 +128,11 @@ export class WebSocketService {
             const chatStore = useChatStore();
             const userIndex = chatStore.users.findIndex(user => user.id == senderId);
             
-            if (userIndex !== -1) {
+            // 检查当前用户是否正在查看该发送者的聊天界面
+            const currentChatUser = chatStore.selectedUser;
+            
+            // 如果当前正在查看该发送者的聊天界面，则不更新未读消息数量
+            if (userIndex !== -1 && (!currentChatUser || currentChatUser.id !== senderId)) {
               const updatedUsers = [...chatStore.users];
               updatedUsers[userIndex].unreadCount = unreadCount;
               chatStore.users = updatedUsers;
@@ -171,6 +175,34 @@ export class WebSocketService {
               console.log('通过心跳确认恢复连接状态');
               chatStore.setConnectionStatus(true);
               // 不在这里调用addUser，避免重复处理
+            }
+          });
+          
+          // 订阅已读回执队列
+          this.stompClient?.subscribe('/user/queue/read-receipts', (message: IMessage) => {
+            const data = JSON.parse(message.body);
+            console.log('收到已读回执:', data);
+            
+            // 获取读取者ID和时间戳
+            const readerId = data.readerId;
+            const timestamp = data.timestamp;
+            
+            // 更新消息的已读状态
+            const chatStore = useChatStore();
+            
+            // 如果当前选中的用户就是已读回执的发送者
+            if (chatStore.selectedUser && chatStore.selectedUser.id === readerId) {
+              console.log(`用户 ${readerId} 已读取了您的消息`);
+              
+              // 这里可以更新UI，显示消息已读状态
+              // 例如，可以添加一个事件，让UI组件知道消息已被读取
+              const event = new CustomEvent('messagesRead', { 
+                detail: { 
+                  readerId: readerId,
+                  timestamp: timestamp
+                } 
+              });
+              window.dispatchEvent(event);
             }
           });
         },
@@ -310,6 +342,23 @@ export class WebSocketService {
       this.stompClient.publish({ destination: '/app/chat.addUser', body: JSON.stringify(message) });
     } else {
       console.error('STOMP未连接，无法添加用户')
+    }
+  }
+  
+  // 标记与特定用户的消息为已读
+  markMessagesAsRead(userId: number | string) {
+    if (this.stompClient && this.stompClient.connected) {
+      const message = {
+        senderId: userId
+      }
+      this.stompClient.publish({ 
+        destination: '/app/chat.markAsRead', 
+        body: JSON.stringify(message) 
+      });
+      console.log(`已发送标记来自用户 ${userId} 的消息为已读的请求`);
+    } else {
+      console.error('STOMP未连接，无法标记消息为已读')
+      this.reconnect()
     }
   }
   

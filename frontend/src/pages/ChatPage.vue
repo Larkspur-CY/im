@@ -26,7 +26,6 @@ import MessageList from '../components/chat/MessageList.vue'
 import MessageInput from '../components/chat/MessageInput.vue'
 import { useChatStore } from '../store/chatStore'
 import { websocketService } from '../services/websocketService'
-import { messageApi } from '../services/apiService'
 import type { Message } from '../services/apiService'
 import '../assets/chat.css'
 
@@ -41,13 +40,10 @@ const router = useRouter()
 const selectUser = async (user: any) => {
   chatStore.setSelectedUser(user)
   
-  // 标记所有消息为已读
+  // 标记所有消息为已读（使用WebSocket）
   if (chatStore.currentUser) {
-    try {
-      await messageApi.markAllMessagesAsRead(user.id, chatStore.currentUser.id);
-    } catch (error) {
-      console.error('标记消息为已读失败:', error);
-    }
+    // 使用WebSocket标记消息为已读
+    websocketService.markMessagesAsRead(user.id);
     
     // 获取两个用户之间的消息历史
     await chatStore.fetchMessagesBetweenUsers(chatStore.currentUser.id, user.id)
