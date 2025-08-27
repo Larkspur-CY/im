@@ -68,21 +68,27 @@ export const useChatStore = defineStore('chat', () => {
     
     const senderId = data.senderId;
     
+    // 判断消息是否由当前用户发送
+    const isSentByMe = currentUser.value && senderId == currentUser.value.id;
+    
+    // 如果是自己发送的消息，不再添加到消息列表中（因为已经在发送时添加过了）
+    if (isSentByMe) {
+      console.log('收到自己发送的消息确认，跳过添加');
+      return;
+    }
+    
     // 创建消息对象
     const message: Message = {
       id: data.id ? data.id : Date.now(),
       text: data.content,
-      // 判断消息是否由当前用户发送
-      // 如果senderId等于当前用户ID，则是当前用户发送的消息
-      sender: currentUser.value && senderId == currentUser.value.id ? 'me' : 'other',
+      sender: 'other', // 这里一定是其他人的消息，因为自己的消息已经在上面返回了
       timestamp: data.sentTime ? new Date(data.sentTime) : new Date(),
       userId: senderId
     }
     
-    console.log('处理消息:', {
+    console.log('处理收到的消息:', {
       senderId: senderId,
       currentUserId: currentUser.value?.id,
-      isSentByMe: currentUser.value && senderId == currentUser.value.id,
       sender: message.sender
     });
     
