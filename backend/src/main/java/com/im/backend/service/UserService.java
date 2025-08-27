@@ -19,7 +19,7 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private MessageService messageService;
 
@@ -28,16 +28,16 @@ public class UserService {
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
-    
+
     public List<UserWithUnreadCountDTO> getAllUsersWithUnreadCount(Long currentUserId) {
         List<User> users = userRepository.findAll();
         // 过滤掉当前登录用户
         return users.stream()
-            .filter(user -> !user.getId().equals(currentUserId))
-            .map(user -> {
-                Long unreadCount = messageService.getUnreadMessageCountBetweenUsers(user.getId(), currentUserId);
-                return new UserWithUnreadCountDTO(user, unreadCount);
-            }).collect(Collectors.toList());
+                .filter(user -> !user.getId().equals(currentUserId))
+                .map(user -> {
+                    Long unreadCount = messageService.getUnreadMessageCountBetweenUsers(user.getId(), currentUserId);
+                    return new UserWithUnreadCountDTO(user, unreadCount);
+                }).collect(Collectors.toList());
     }
 
     public User getUserById(Long id) {
@@ -54,7 +54,7 @@ public class UserService {
         if (userRepository.findByUsername(user.getUsername()) != null) {
             throw new RuntimeException("用户名已存在");
         }
-        
+
         // 检查邮箱是否已存在
         if (userRepository.findByEmail(user.getEmail()) != null) {
             throw new RuntimeException("邮箱已存在");
@@ -68,7 +68,7 @@ public class UserService {
 
         return userRepository.save(user);
     }
-    
+
     public User createUser(RegisterUserDTO userDto) {
         User user = new User();
         user.setUsername(userDto.getUsername());
@@ -76,7 +76,7 @@ public class UserService {
         user.setEmail(userDto.getEmail());
         user.setNickname(userDto.getNickname());
         user.setAvatar(userDto.getAvatar());
-        
+
         return createUser(user);
     }
 
@@ -95,7 +95,7 @@ public class UserService {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            
+
             if (userDetails.getNickname() != null) {
                 user.setNickname(userDetails.getNickname());
             }
@@ -105,31 +105,28 @@ public class UserService {
             if (userDetails.getEmail() != null) {
                 user.setEmail(userDetails.getEmail());
             }
-            
+
             user.setUpdatedTime(LocalDateTime.now());
             return userRepository.save(user);
         }
         return null;
     }
-    
+
     public User updateUser(Long id, UpdateUserDTO userDto) {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            
+
             if (userDto.getNickname() != null) {
                 user.setNickname(userDto.getNickname());
             }
             if (userDto.getAvatar() != null) {
                 user.setAvatar(userDto.getAvatar());
             }
-            if (userDto.getEmail() != null) {
-                user.setEmail(userDto.getEmail());
-            }
             if (userDto.getShowReadStatus() != null) {
                 user.setShowReadStatus(userDto.getShowReadStatus());
             }
-            
+
             user.setUpdatedTime(LocalDateTime.now());
             return userRepository.save(user);
         }
@@ -159,7 +156,7 @@ public class UserService {
             userRepository.save(user);
         }
     }
-    
+
     /**
      * 验证用户名和邮箱是否匹配
      * @param username 用户名
@@ -173,7 +170,7 @@ public class UserService {
         }
         return false;
     }
-    
+
     /**
      * 重置用户密码
      * @param username 用户名
@@ -189,5 +186,46 @@ public class UserService {
             return userRepository.save(user);
         }
         throw new RuntimeException("用户名或邮箱不正确");
+    }
+
+    /**
+     * 修改用户密码
+     * @param id 用户ID
+     * @param oldPassword 旧密码
+     * @param newPassword 新密码
+     * @return 更新后的用户对象
+     */
+    public User changePassword(Long id, String oldPassword, String newPassword, String email) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            // 验证旧密码是否正确
+            if (passwordEncoder.matches(oldPassword, user.getPassword())) {
+                // 设置新密码
+                user.setPassword(passwordEncoder.encode(newPassword));
+                user.setEmail(email);
+                user.setUpdatedTime(LocalDateTime.now());
+                return userRepository.save(user);
+            } else {
+                throw new RuntimeException("旧密码不正确");
+            }
+        }
+        throw new RuntimeException("用户不存在");
+    }
+
+    /**
+     * 验证用户密码
+     * @param id 用户ID
+     * @param password 密码
+     * @return 如果密码正确返回true，否则返回false
+     */
+    public boolean verifyPassword(Long id, String password) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            // 验证密码是否正确
+            return passwordEncoder.matches(password, user.getPassword());
+        }
+        return false;
     }
 }

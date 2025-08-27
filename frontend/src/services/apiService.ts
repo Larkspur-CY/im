@@ -37,6 +37,24 @@ export interface Message {
   pending?: boolean
   confirmed?: boolean
   serverMessageId?: number // 服务器生成的消息ID
+  readStatus?: boolean  // 消息是否已读
+}
+
+
+// 无权限相关API
+export const openApi = {
+  
+  // 用户注册
+  register: (userData: any) => apiClient.post('/open/register', userData),
+  
+  // 用户登录
+  login: (credentials: any) => apiClient.post('/open/login', credentials),
+  
+  // 验证用户邮箱（用于忘记密码）
+  verifyUserEmail: (data: any) => apiClient.post('/open/verify-email', data),
+  
+  // 重置密码
+  resetPassword: (data: any) => apiClient.post('/open/reset-password', data),
 }
 
 // 用户相关API
@@ -47,23 +65,26 @@ export const userApi = {
   // 根据ID获取用户
   getUserById: (id: number) => apiClient.get(`/users/${id}`),
   
-  // 用户注册
-  register: (userData: any) => apiClient.post('/open/register', userData),
-  
-  // 用户登录
-  login: (credentials: any) => apiClient.post('/open/login', credentials),
-  
   // 获取在线用户
   getOnlineUsers: () => apiClient.get('/users/online'),
   
   // 获取带未读数量的用户列表
   getWithUnreadCount: () => apiClient.get('/users/with-unread-count'),
+
+  // 验证密码
+  verifyPassword: (data: { password: string }) => {
+    return apiClient.post('/users/verify-password', data)
+  },
+
+    // 更新用户信息
+  updateUser: (data: { nickname?: string; avatar?: string; showReadStatus?: boolean }) => {
+    return apiClient.put(`/users/updateUser`, data)
+  },
   
-  // 验证用户邮箱（用于忘记密码）
-  verifyUserEmail: (data: any) => apiClient.post('/open/verify-email', data),
-  
-  // 重置密码
-  resetPassword: (data: any) => apiClient.post('/open/reset-password', data),
+  // 修改密码
+  changePassword: (data: {  email?: string; oldPassword: string; newPassword: string }) => {
+    return apiClient.put(`/users/change-password`, data)
+  },
 }
 
 // 消息相关API

@@ -13,7 +13,7 @@
         <span class="message-time">{{ formatTime(message.timestamp) }}</span>
         <span v-if="message.pending" class="pending-status">发送中...</span>
         <span v-else-if="message.confirmed && showConfirmedStatus[message.id]" class="confirmed-status">已送达</span>
-        <span v-else-if="message.isRead" class="read-status">已读</span>
+        <span v-else-if="message.readStatus" class="read-status">已读</span>
       </div>
       <div class="message-row">
         <div class="avatar-container" v-if="message.sender !== 'me'">
@@ -44,20 +44,8 @@
 <script setup lang="ts">
 import { ref, watch, onUpdated, reactive, onMounted, onUnmounted } from 'vue'
 import { useChatStore } from '../../store/chatStore'
+import type{ Message } from '../../services/apiService'
 import '../../assets/message-list.css'
-
-interface Message {
-  id: number
-  text: string
-  sender: 'me' | 'other'
-  userId: number
-  timestamp: Date
-  error?: boolean
-  errorMessage?: string
-  pending?: boolean
-  confirmed?: boolean
-  isRead?: boolean
-}
 
 const props = defineProps<{ messages: Message[] }>()
 const chatStore = useChatStore()
@@ -137,11 +125,11 @@ const handleMessagesRead = (event: CustomEvent) => {
     // 更新所有发送给该读者的消息为已读
     for (let i = 0; i < updatedMessages.length; i++) {
       const message = updatedMessages[i];
-      if (message.sender === 'me' && !message.isRead) {
+      if (message.sender === 'me' && !message.readStatus) {
         // 将消息标记为已读
         updatedMessages[i] = {
           ...message,
-          isRead: true
+          readStatus: true
         };
         hasChanges = true;
       }
@@ -149,6 +137,7 @@ const handleMessagesRead = (event: CustomEvent) => {
     
     // 只有当有消息状态变化时才更新消息列表
     if (hasChanges) {
+      // 使用 chatStore 的 setter 方法来更新消息
       chatStore.messages = updatedMessages;
     }
   }

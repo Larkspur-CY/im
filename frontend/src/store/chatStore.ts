@@ -25,7 +25,7 @@ interface WebSocketMessage {
   senderId?: number
   receiverId?: number
   sentTime?: string
-  isRead?: boolean
+  readStatus?: boolean
 }
 
 export const useChatStore = defineStore('chat', () => {

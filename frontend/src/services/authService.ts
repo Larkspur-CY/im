@@ -1,4 +1,4 @@
-import { userApi } from './apiService'
+import { userApi, openApi } from './apiService'
 import { websocketService } from './websocketService'
 import { jwtDecode } from 'jwt-decode'
 
@@ -13,6 +13,7 @@ export interface User {
   lastLoginTime?: string
   createdTime?: string
   updatedTime?: string
+  showReadStatus?: boolean
 }
 
 // 定义登录凭证类型
@@ -34,7 +35,7 @@ export const authService = {
   // 登录
   login: async (credentials: LoginCredentials): Promise<User> => {
     try {
-      const response = await userApi.login(credentials)
+      const response = await openApi.login(credentials)
       
       // 保存用户信息到本地存储
       localStorage.setItem('user', JSON.stringify(response.data.user))
@@ -52,7 +53,7 @@ export const authService = {
   // 注册
   register: async (data: RegisterData): Promise<User> => {
     try {
-      const response = await userApi.register(data)
+      const response = await openApi.register(data)
       return response.data
     } catch (error: any) {
       console.error('注册失败:', error)

@@ -141,7 +141,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { authService } from "../services/authService";
-import { userApi } from "../services/apiService";
+import { openApi } from "../services/apiService";
 import { initParticles, updateParticleTheme } from "../assets/particles";
 import "../assets/login.css";
 
@@ -229,7 +229,7 @@ const handleResetPassword = async () => {
       }
 
       // 调用验证接口
-      const response = await userApi.verifyUserEmail({
+      const response = await openApi.verifyUserEmail({
         username: resetUsername.value,
         email: resetEmail.value,
       });
@@ -250,7 +250,7 @@ const handleResetPassword = async () => {
       }
 
       // 调用重置密码接口
-      await userApi.resetPassword({
+      await openApi.resetPassword({
         username: resetUsername.value,
         email: resetEmail.value,
         newPassword: newPassword.value,
