@@ -219,7 +219,7 @@ public class ChatController {
         // 更新用户在线状态
         userService.setUserOnline(userId, true);
     }
-    
+
     /**
      * 处理标记消息为已读的请求
      */
@@ -227,40 +227,40 @@ public class ChatController {
     public void markMessagesAsRead(@Payload Map<String, Object> payload, StompHeaderAccessor headerAccessor) {
         // 从认证信息中获取当前用户ID（接收者）
         Long currentUserId = WebSocketUtils.extractUserId(headerAccessor);
-        
+
         if (currentUserId == null) {
             System.err.println("无法标记消息为已读，因为无法确定当前用户ID");
             return;
         }
-        
+
         try {
             // 获取发送者ID
             Long senderId = Long.valueOf(payload.get("senderId").toString());
-            
+
             // 将该发送者发送给当前用户的所有未读消息标记为已读
             messageService.markAllMessagesAsRead(senderId, currentUserId);
-            
+
             // 获取更新后的未读消息数量（应该为0）
             long unreadCount = messageService.getUnreadMessageCountBetweenUsers(senderId, currentUserId);
-            
+
             // 通知当前用户更新未读消息数量
             sendUnreadCountUpdate(currentUserId, senderId, unreadCount);
-            
+
             // 检查消息发送者是否允许接收已读回执
             User sender = userService.getUserById(senderId);
-            if (sender != null && sender.getShowReadStatus()) {
+            if (sender != null && Boolean.TRUE.equals(sender.getShowReadStatus())) {
                 // 向发送者发送已读回执
                 Map<String, Object> readReceipt = new HashMap<>();
                 readReceipt.put("type", "READ_RECEIPT");
                 readReceipt.put("readerId", currentUserId);
                 readReceipt.put("timestamp", System.currentTimeMillis());
-                
+
                 messagingTemplate.convertAndSendToUser(
-                    senderId.toString(),
-                    "/queue/read-receipts",
-                    readReceipt
+                        senderId.toString(),
+                        "/queue/read-receipts",
+                        readReceipt
                 );
-                
+
                 System.out.println("用户 " + currentUserId + " 已将来自用户 " + senderId + " 的所有消息标记为已读，并发送已读回执");
             } else {
                 System.out.println("用户 " + currentUserId + " 已将来自用户 " + senderId + " 的所有消息标记为已读，但未发送已读回执（已禁用）");
