@@ -76,6 +76,16 @@ public class ChatController {
             message.setSenderId(senderId);
             message.setReceiverId(Long.valueOf(messagePayload.get("receiverId").toString()));
             message.setContent((String) messagePayload.get("content"));
+            
+            // 如果前端提供了消息ID，保存它用于确认
+            Long clientMessageId = null;
+            if (messagePayload.get("id") != null) {
+                try {
+                    clientMessageId = Long.valueOf(messagePayload.get("id").toString());
+                } catch (NumberFormatException e) {
+                    System.err.println("无效的客户端消息ID格式: " + messagePayload.get("id"));
+                }
+            }
 
             // 设置消息类型，如果前端没有提供则默认为TEXT
             String type = (String) messagePayload.get("type");
@@ -92,18 +102,36 @@ public class ChatController {
             // 保存消息
             message = messageService.saveMessage(message);
 
-            // 发送消息给特定用户
+            // 创建发送给接收者的消息对象
+            Map<String, Object> receiverMessage = new HashMap<>();
+            receiverMessage.put("id", message.getId());
+            receiverMessage.put("senderId", message.getSenderId());
+            receiverMessage.put("receiverId", message.getReceiverId());
+            receiverMessage.put("content", message.getContent());
+            receiverMessage.put("type", message.getType().toString());
+            receiverMessage.put("sentTime", message.getSentTime());
+            receiverMessage.put("isRead", message.getIsRead());
+
+            // 发送消息给接收者
             messagingTemplate.convertAndSendToUser(
                     message.getReceiverId().toString(),
                     "/queue/messages",
-                    message
+                    receiverMessage
             );
 
-            // 也可以发送给发送者确认消息已发送
+            // 创建发送给发送者的确认消息对象
+            Map<String, Object> confirmationMessage = new HashMap<>(receiverMessage);
+            // 如果有客户端消息ID，添加到确认消息中
+            if (clientMessageId != null) {
+                confirmationMessage.put("clientMessageId", clientMessageId);
+            }
+            confirmationMessage.put("status", "DELIVERED");
+
+            // 发送确认消息给发送者
             messagingTemplate.convertAndSendToUser(
                     message.getSenderId().toString(),
                     "/queue/messages",
-                    message
+                    confirmationMessage
             );
 
             // 通知接收者更新未读消息数量

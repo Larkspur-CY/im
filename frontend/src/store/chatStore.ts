@@ -67,39 +67,82 @@ export const useChatStore = defineStore('chat', () => {
     }
     
     const senderId = data.senderId;
+    const messageId = data.id;
     
     // 判断消息是否由当前用户发送
     const isSentByMe = currentUser.value && senderId == currentUser.value.id;
     
-    // 如果是自己发送的消息，不再添加到消息列表中（因为已经在发送时添加过了）
     if (isSentByMe) {
-      console.log('收到自己发送的消息确认，跳过添加');
+      console.log('收到自己发送的消息确认:', data);
+      
+      // 查找对应的待确认消息
+      // 优先使用clientMessageId（如果后端返回了）
+      const clientMessageId = (data as any).clientMessageId || messageId;
+      if (!clientMessageId) {
+        console.error('收到的确认消息没有ID:', data);
+        return;
+      }
+      
+      // 查找待确认的消息
+      const messageIndex = messages.value.findIndex(m => m.id === clientMessageId && m.pending === true);
+      if (messageIndex !== -1) {
+        // 更新消息状态为已确认
+        const updatedMessages = [...messages.value];
+        updatedMessages[messageIndex] = {
+          ...updatedMessages[messageIndex],
+          pending: false,
+          confirmed: true, // 标记为已确认
+          // 如果后端返回了新ID，更新消息ID（但保留原始ID用于查找）
+          serverMessageId: messageId
+        };
+        messages.value = updatedMessages;
+        console.log('消息已确认:', clientMessageId);
+      } else {
+        console.log('未找到待确认的消息:', clientMessageId);
+      }
       return;
     }
     
-    // 创建消息对象
-    const message: Message = {
-      id: data.id ? data.id : Date.now(),
-      text: data.content,
-      sender: 'other', // 这里一定是其他人的消息，因为自己的消息已经在上面返回了
-      timestamp: data.sentTime ? new Date(data.sentTime) : new Date(),
-      userId: senderId
-    }
-    
-    console.log('处理收到的消息:', {
-      senderId: senderId,
-      currentUserId: currentUser.value?.id,
-      sender: message.sender
-    });
-    
-    // 添加消息到列表
-    messages.value.push(message)
-    
+    // 处理来自其他用户的消息
     // 如果消息不是当前用户发送的（即收到了其他用户的消息）
     if (currentUser.value && senderId != currentUser.value.id) {
+      // 获取消息发送者的ID和接收者的ID
+      const receiverId = data.receiverId;
+      
+      // 确保消息是发给当前用户的
+      if (receiverId != currentUser.value.id) {
+        console.log('收到的消息不是发给当前用户的，忽略:', {
+          senderId: senderId,
+          receiverId: receiverId,
+          currentUserId: currentUser.value.id
+        });
+        return;
+      }
+      
       // 检查消息是否来自当前选中的用户
       if (selectedUser.value && senderId == selectedUser.value.id) {
-        // 如果是当前选中的用户发来的消息，重置该用户的未读消息数量
+        // 如果是当前选中的用户发来的消息，才添加到消息列表中
+        const message: Message = {
+          id: messageId ? messageId : Date.now(),
+          text: data.content,
+          sender: 'other',
+          timestamp: data.sentTime ? new Date(data.sentTime) : new Date(),
+          userId: senderId,
+          confirmed: true // 从服务器收到的消息默认为已确认
+        }
+        
+        console.log('处理收到的消息并添加到列表:', {
+          senderId: senderId,
+          currentUserId: currentUser.value?.id,
+          selectedUserId: selectedUser.value.id,
+          messageId: messageId
+        });
+        
+        // 添加消息到列表
+        messages.value.push(message)
+        
+        // 用户正在查看此对话，不增加未读消息数量
+        // 重置该用户的未读消息数量
         const userIndex = users.value.findIndex(user => user.id == senderId);
         if (userIndex !== -1) {
           const updatedUsers = [...users.value];
@@ -107,7 +150,12 @@ export const useChatStore = defineStore('chat', () => {
           users.value = updatedUsers;
         }
       } else {
-        // 如果不是当前选中的用户发来的消息，增加该用户的未读消息数量
+        // 如果不是当前选中的用户发来的消息，只增加未读消息数量，不添加到当前消息列表
+        console.log('收到非当前选中用户的消息，更新未读数量:', {
+          senderId: senderId,
+          currentSelectedUser: selectedUser.value?.id
+        });
+        
         const userIndex = users.value.findIndex(user => user.id == senderId);
         if (userIndex !== -1) {
           const updatedUsers = [...users.value];

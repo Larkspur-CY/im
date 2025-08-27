@@ -34,6 +34,9 @@ export interface Message {
   userId: number
   error?: boolean
   errorMessage?: string
+  pending?: boolean
+  confirmed?: boolean
+  serverMessageId?: number // 服务器生成的消息ID
 }
 
 // 用户相关API
