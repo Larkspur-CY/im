@@ -21,7 +21,7 @@ const router = createRouter({
 })
 
 // 路由守卫，检查用户是否已登录
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const isAuthenticated = authService.isAuthenticated()
   
   if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
