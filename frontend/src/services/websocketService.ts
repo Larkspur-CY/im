@@ -16,6 +16,7 @@ export class WebSocketService {
   private lastHeartbeatReceived: number = 0 // 最后一次收到心跳的时间戳
   private heartbeatCheckTimer: number | null = null // 心跳检查定时器
   private heartbeatMaxDelay = 90000 // 心跳最大延迟时间（90秒）
+  private reconnectTimer: number | null = null // 重连定时器引用
   
   constructor(url: string) {
     this.url = url
@@ -26,7 +27,18 @@ export class WebSocketService {
     document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this))
   }
   
+  // 统一的登录状态检查方法
+  private isLoggedIn(): boolean {
+    const token = localStorage.getItem('token');
+    return !!token;
+  }
+  
   private handleOnline() {
+    if (!this.isLoggedIn()) {
+      console.log('用户未登录，不尝试重连WebSocket')
+      return;
+    }
+    
     console.log('网络已恢复，尝试重新连接WebSocket')
     this.reconnect()
   }
@@ -38,6 +50,11 @@ export class WebSocketService {
   }
   
   private handleVisibilityChange() {
+    if (!this.isLoggedIn()) {
+      console.log('用户未登录，不尝试重连WebSocket')
+      return;
+    }
+    
     if (document.visibilityState === 'visible') {
       console.log('页面可见，检查WebSocket连接')
       this.checkConnection()
@@ -45,6 +62,11 @@ export class WebSocketService {
   }
   
   private checkConnection() {
+    if (!this.isLoggedIn()) {
+      console.log('用户未登录，不尝试重连WebSocket')
+      return;
+    }
+    
     if (!this.stompClient || !this.stompClient.connected) {
       console.log('WebSocket连接已断开，尝试重新连接')
       this.reconnect()
@@ -60,6 +82,11 @@ export class WebSocketService {
       
       // 设置连接超时监视器
       this.connectionWatchdog = window.setTimeout(() => {
+        if (!this.isLoggedIn()) {
+          console.log('用户未登录，不尝试重连WebSocket')
+          return;
+        }
+        
         console.log('WebSocket连接超时，尝试重新连接')
         this.reconnect()
       }, this.connectionTimeout) as unknown as number
@@ -221,6 +248,12 @@ export class WebSocketService {
           // 停止心跳
           this.stopHeartbeat()
           
+          // 检查用户是否仍然登录
+          if (!this.isLoggedIn()) {
+            console.log('用户未登录，不尝试重连WebSocket')
+            return;
+          }
+          
           // 指数退避重连策略
           const reconnectDelay = Math.min(30000, this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts))
           console.log(`将在 ${reconnectDelay/1000} 秒后尝试第 ${this.reconnectAttempts + 1} 次重连`)
@@ -228,7 +261,8 @@ export class WebSocketService {
           // 尝试重连
           if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++
-            setTimeout(() => this.reconnect(), reconnectDelay)
+            // 保存定时器引用以便在disconnect时清除
+            this.reconnectTimer = setTimeout(() => this.reconnect(), reconnectDelay) as unknown as number;
           }
         },
         onStompError: (frame) => {
@@ -281,6 +315,11 @@ export class WebSocketService {
     
     // 如果超过最大心跳延迟时间，认为连接已断开
     if (timeSinceLastHeartbeat > this.heartbeatMaxDelay) {
+      if (!this.isLoggedIn()) {
+        console.log('用户未登录，不尝试重连WebSocket')
+        return;
+      }
+      
       console.warn(`心跳超时 (${timeSinceLastHeartbeat}ms)，尝试重新连接`)
       
       // 获取聊天存储
@@ -305,6 +344,11 @@ export class WebSocketService {
         body: JSON.stringify({ timestamp: new Date().getTime() }) 
       })
     } else {
+      if (!this.isLoggedIn()) {
+        console.log('用户未登录，不尝试重连WebSocket')
+        return;
+      }
+      
       console.warn('心跳检测到WebSocket未连接，尝试重连')
       this.reconnect()
     }
@@ -312,6 +356,11 @@ export class WebSocketService {
   
   // 重连方法
   private reconnect() {
+    if (!this.isLoggedIn()) {
+      console.log('用户未登录，不尝试重连WebSocket')
+      return;
+    }
+    
     // 先断开现有连接
     if (this.stompClient) {
       try {
@@ -328,6 +377,11 @@ export class WebSocketService {
   }
   
   sendMessage(message: any) {
+    if (!this.isLoggedIn()) {
+      console.log('用户未登录，不发送消息')
+      return;
+    }
+    
     if (this.stompClient && this.stompClient.connected) {
       // 不再手动添加senderId，让后端从token中解析
       this.stompClient.publish({ destination: '/app/chat.sendMessage', body: JSON.stringify(message) });
@@ -353,6 +407,11 @@ export class WebSocketService {
   
   // 标记与特定用户的消息为已读
   markMessagesAsRead(userId: number | string) {
+    if (!this.isLoggedIn()) {
+      console.log('用户未登录，不发送已读回执')
+      return;
+    }
+    
     if (this.stompClient && this.stompClient.connected) {
       const message = {
         senderId: userId
@@ -391,6 +450,12 @@ export class WebSocketService {
     if (this.stompClient) {
       this.stompClient.deactivate()
       this.stompClient = null
+    }
+    
+    // 清除可能存在的重连定时器
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
   }
 }
