@@ -187,6 +187,22 @@ public class ChatController {
             }
         });
     }
+    
+    /**
+     * 处理用户断开连接
+     * 这个方法会在WebSocket会话关闭时被调用
+     */
+    public void handleDisconnect(Long userId) {
+        if (userId != null) {
+            // 从心跳Map中移除用户
+            lastHeartbeatTimes.remove(userId);
+            // 标记用户为离线
+            userService.setUserOnline(userId, false);
+            // 通知其他用户状态变更
+            notifyOnlineUsers();
+            System.out.println("用户 " + userId + " 已断开连接并标记为离线");
+        }
+    }
 
 
     @MessageMapping("/chat.addUser")
@@ -286,22 +302,6 @@ public class ChatController {
         // 获取用户ID
         Long userId = WebSocketUtils.extractUserId(headerAccessor);
         // 即使userId为空，也尝试发送错误信息
-        if (userId != null) {
-            messagingTemplate.convertAndSendToUser(userId.toString(), "/queue/errors", errorResponse);
-        } else {
-            // 如果userId为空，记录错误日志
-            System.err.println("无法发送错误信息给用户，因为userId为空。错误信息: " + message);
-        }
-    }
-
-    // 向指定用户发送错误信息
-    private void sendErrorMessageToUser(String message, String errorCode, Long userId) {
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("type", "ERROR");
-        errorResponse.put("message", message);
-        errorResponse.put("errorCode", errorCode);
-
-        // 向指定用户发送错误信息
         if (userId != null) {
             messagingTemplate.convertAndSendToUser(userId.toString(), "/queue/errors", errorResponse);
         } else {

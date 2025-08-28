@@ -149,7 +149,7 @@ export class WebSocketService {
               const onlineUserIds = new Set(data.map((user: any) => user.id));
               const updatedUsers = chatStore.users.map(user => ({
                 ...user,
-                status: onlineUserIds.has(user.id) ? 'online' : 'offline'
+                isOnline: onlineUserIds.has(user.id)
               }));
               chatStore.users = updatedUsers;
             } else {
@@ -377,6 +377,10 @@ export class WebSocketService {
       clearTimeout(this.connectionWatchdog)
       this.connectionWatchdog = null
     }
+    
+    // 重置重连尝试次数和最大尝试次数
+    this.reconnectAttempts = 0
+    this.maxReconnectAttempts = 0 // 设置为0，防止重连
     
     // 移除事件监听器
     window.removeEventListener('online', this.handleOnline.bind(this))

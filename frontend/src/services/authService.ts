@@ -62,12 +62,33 @@ export const authService = {
   },
   
   // 登出
-  logout: (): void => {
-    // 断开WebSocket连接
-    websocketService.disconnect()
-    
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+  logout: async (): Promise<void> => {
+    try {
+      // 获取当前用户ID
+      const currentUser = authService.getCurrentUser()
+      
+      // 如果用户已登录，先通知后端用户下线
+      if (currentUser && currentUser.id) {
+        try {
+          // 尝试通知后端用户下线
+          await userApi.setUserOffline(currentUser.id)
+        } catch (error) {
+          console.error('通知后端用户下线失败:', error)
+          // 即使通知失败也继续登出流程
+        }
+      }
+      
+      // 断开WebSocket连接
+      websocketService.disconnect()
+      
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    } catch (error) {
+      console.error('登出过程中发生错误:', error)
+      // 确保即使出错也清除本地存储
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    }
   },
   
   // 获取当前用户

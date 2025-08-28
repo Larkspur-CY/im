@@ -57,6 +57,18 @@ public class UserController {
         return ResponseEntity.ok(userService.getOnlineUsers());
     }
 
+    @PutMapping("/{id}/offline")
+    public ResponseEntity<Void> setUserOffline(@PathVariable Long id) {
+        // 验证当前用户是否有权限设置该用户离线
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null || !currentUserId.equals(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        userService.setUserOnline(id, false);
+        return ResponseEntity.ok().build();
+    }
+
 
     @PutMapping("/updateUser")
     public ResponseEntity<User> updateUser(@RequestBody UpdateUserDTO user) {

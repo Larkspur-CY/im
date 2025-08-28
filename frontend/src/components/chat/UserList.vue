@@ -288,12 +288,18 @@ onMounted(() => {
   loadCurrentUser();
 });
 
-const handleLogout = () => {
-  // 调用认证服务的登出方法
-  authService.logout();
-
-  // 跳转到登录页面
-  router.push("/login");
+const handleLogout = async () => {
+  try {
+    // 调用认证服务的登出方法（现在是异步的）
+    await authService.logout();
+    
+    // 跳转到登录页面
+    router.push("/login");
+  } catch (error) {
+    console.error("登出失败:", error);
+    // 即使失败也尝试跳转到登录页面
+    router.push("/login");
+  }
 };
 
 // 打开用户设置弹窗

@@ -76,7 +76,7 @@ export const userApi = {
     return apiClient.post('/users/verify-password', data)
   },
 
-    // 更新用户信息
+  // 更新用户信息
   updateUser: (data: { nickname?: string; avatar?: string; showReadStatus?: boolean }) => {
     return apiClient.put(`/users/updateUser`, data)
   },
@@ -84,6 +84,11 @@ export const userApi = {
   // 修改密码
   changePassword: (data: {  email?: string; oldPassword: string; newPassword: string }) => {
     return apiClient.put(`/users/change-password`, data)
+  },
+  
+  // 设置用户离线状态
+  setUserOffline: (userId: number) => {
+    return apiClient.put(`/users/${userId}/offline`)
   },
 }
 
