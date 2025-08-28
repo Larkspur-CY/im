@@ -150,7 +150,7 @@ import { authService } from "../services/authService";
 import { openApi } from "../services/apiService";
 import { initParticles, updateParticleTheme } from "../assets/particles";
 import "../assets/login.css";
-import Notification from "../components/Notification.vue";
+import Notification, { debounce } from "../components/Notification.vue";
 
 const router = useRouter();
 
@@ -171,7 +171,7 @@ const resetLoading = ref(false);
 const resetErrorMessage = ref("");
 const resetSuccessMessage = ref("");
 
-const login = async () => {
+const login = debounce(async () => {
   if (!username.value || !password.value) {
     errorMessage.value = "请输入用户名和密码";
     return;
@@ -203,7 +203,7 @@ const login = async () => {
   } finally {
     isLoading.value = false;
   }
-};
+});
 
 const goToRegister = () => {
   router.push("/register");
@@ -222,7 +222,7 @@ const closeResetPasswordModal = () => {
 };
 
 // 忘记密码处理函数
-const handleResetPassword = async () => {
+const handleResetPassword = debounce(async () => {
   resetErrorMessage.value = "";
   resetSuccessMessage.value = "";
   resetLoading.value = true;
@@ -281,7 +281,7 @@ const handleResetPassword = async () => {
   } finally {
     resetLoading.value = false;
   }
-};
+});
 
 // 检查是否有记住的用户名
 const rememberedUsername = localStorage.getItem("rememberedUsername");

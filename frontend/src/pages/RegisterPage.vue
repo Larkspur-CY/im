@@ -83,7 +83,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '../services/authService'
 import '../assets/register.css'
-import Notification from '../components/Notification.vue'
+import Notification, { debounce } from '../components/Notification.vue'
 
 const router = useRouter()
 
@@ -95,7 +95,7 @@ const confirmPassword = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
 
-const register = async () => {
+const register = debounce(async () => {
   // 表单验证
   if (!username.value || !email.value || !nickname.value || !password.value || !confirmPassword.value) {
     errorMessage.value = '请填写所有必填字段'
@@ -139,7 +139,7 @@ const register = async () => {
   } finally {
     isLoading.value = false
   }
-}
+})
 
 const goToLogin = () => {
   router.push('/login')

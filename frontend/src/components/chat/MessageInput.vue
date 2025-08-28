@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import '../../assets/message-input.css'
+import { debounce } from '../../components/Notification.vue'
 
 defineProps<{ selectedUser: User | null }>()
 const emit = defineEmits(['send-message'])
@@ -32,15 +33,10 @@ interface User {
 const messageText = ref('')
 const isSending = ref(false)
 
-const sendMessage = () => {
+const sendMessage = debounce(() => {
   if (messageText.value.trim() && !isSending.value) {
     isSending.value = true
     emit('send-message', messageText.value)
-    // 模拟发送延迟
-    setTimeout(() => {
-      messageText.value = ''
-      isSending.value = false
-    }, 300)
   }
-}
+})
 </script>
