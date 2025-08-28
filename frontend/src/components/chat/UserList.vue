@@ -143,8 +143,16 @@
               </div>
             </div>
           </div>
+          <div v-if="userSettingsErrorMessage" class="error-message">
+            {{ userSettingsErrorMessage }}
+          </div>
+          <div v-if="userSettingsSuccessMessage" class="success-message">
+            {{ userSettingsSuccessMessage }}
+          </div>
           <div class="form-actions">
-            <button class="save-button" @click="saveUserSettings">保存</button>
+            <button class="save-button" @click="saveUserSettings" :disabled="userSettingsLoading">
+              {{ userSettingsLoading ? "保存中..." : "保存" }}
+            </button>
           </div>
         </div>
       </div>
@@ -204,17 +212,25 @@
               </div>
             </div>
 
+            <div v-if="securitySettingsErrorMessage" class="error-message">
+              {{ securitySettingsErrorMessage }}
+            </div>
+            <div v-if="securitySettingsSuccessMessage" class="success-message">
+              {{ securitySettingsSuccessMessage }}
+            </div>
+
             <div class="form-actions">
               <button
                 v-if="securityStep === 1"
                 class="save-button"
                 @click="verifyCurrentPassword"
+                :disabled="securitySettingsLoading"
               >
-                下一步
+                {{ securitySettingsLoading ? "验证中..." : "下一步" }}
               </button>
               <div v-if="securityStep === 2">
-                <button class="save-button" @click="saveSecuritySettings">
-                  保存
+                <button class="save-button" @click="saveSecuritySettings" :disabled="securitySettingsLoading">
+                  {{ securitySettingsLoading ? "保存中..." : "保存" }}
                 </button>
               </div>
             </div>
@@ -257,6 +273,11 @@ const currentUser = ref({
   showReadStatus: 1,
 });
 
+// 用户设置提醒信息
+const userSettingsErrorMessage = ref("");
+const userSettingsSuccessMessage = ref("");
+const userSettingsLoading = ref(false);
+
 // 安全设置步骤状态
 const securityStep = ref(1);
 
@@ -267,6 +288,11 @@ const securitySettings = ref({
   newPassword: "",
   confirmPassword: "",
 });
+
+// 安全设置提醒信息
+const securitySettingsErrorMessage = ref("");
+const securitySettingsSuccessMessage = ref("");
+const securitySettingsLoading = ref(false);
 
 const router = useRouter();
 
@@ -306,6 +332,9 @@ const handleLogout = async () => {
 const openUserSettings = () => {
   loadCurrentUser();
   showUserSettings.value = true;
+  // 清除之前的提醒信息
+  userSettingsErrorMessage.value = "";
+  userSettingsSuccessMessage.value = "";
 };
 
 // 关闭用户设置弹窗
@@ -324,6 +353,9 @@ const openSecuritySettings = () => {
   };
   securityStep.value = 1; // 重置步骤
   showSecuritySettings.value = true;
+  // 清除之前的提醒信息
+  securitySettingsErrorMessage.value = "";
+  securitySettingsSuccessMessage.value = "";
 };
 
 // 关闭安全设置弹窗
@@ -335,9 +367,12 @@ const closeSecuritySettings = () => {
 const saveUserSettings = async () => {
   // 验证昵称输入
   if (!currentUser.value.nickname) {
-    alert("请输入昵称");
+    userSettingsErrorMessage.value = "请输入昵称";
     return;
   }
+
+  userSettingsErrorMessage.value = "";
+  userSettingsLoading.value = true;
 
   try {
     await userApi.updateUser({
@@ -353,20 +388,28 @@ const saveUserSettings = async () => {
       localStorage.setItem("user", JSON.stringify(user));
     }
 
-    closeUserSettings();
-    alert("用户设置保存成功");
+    userSettingsSuccessMessage.value = "用户设置保存成功";
+    // 2秒后关闭弹窗
+    setTimeout(() => {
+      closeUserSettings();
+    }, 2000);
   } catch (error) {
     console.error("保存用户设置失败:", error);
-    alert("保存用户设置失败: " + (error as any).response?.data || "未知错误");
+    userSettingsErrorMessage.value = "保存用户设置失败: " + (error as any).response?.data || "未知错误";
+  } finally {
+    userSettingsLoading.value = false;
   }
 };
 
 // 验证当前密码
 const verifyCurrentPassword = async () => {
   if (!securitySettings.value.oldPassword) {
-    alert("请输入当前密码");
+    securitySettingsErrorMessage.value = "请输入当前密码";
     return;
   }
+
+  securitySettingsErrorMessage.value = "";
+  securitySettingsLoading.value = true;
 
   try {
     // 调用验证密码接口
@@ -378,7 +421,9 @@ const verifyCurrentPassword = async () => {
     securityStep.value = 2;
   } catch (error) {
     console.error("密码验证失败:", error);
-    alert("当前密码错误，请重新输入");
+    securitySettingsErrorMessage.value = "当前密码错误，请重新输入";
+  } finally {
+    securitySettingsLoading.value = false;
   }
 };
 
@@ -389,7 +434,7 @@ const saveSecuritySettings = async () => {
     // 验证邮箱格式
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(securitySettings.value.email)) {
-      alert("请输入有效的邮箱地址");
+      securitySettingsErrorMessage.value = "请输入有效的邮箱地址";
       return;
     }
   }
@@ -397,20 +442,23 @@ const saveSecuritySettings = async () => {
   // 验证密码输入
   if (securitySettings.value.newPassword || securitySettings.value.confirmPassword) {
     if (!securitySettings.value.newPassword) {
-      alert("请输入新密码");
+      securitySettingsErrorMessage.value = "请输入新密码";
       return;
     }
 
     if (!securitySettings.value.confirmPassword) {
-      alert("请确认新密码");
+      securitySettingsErrorMessage.value = "请确认新密码";
       return;
     }
 
     if (securitySettings.value.newPassword !== securitySettings.value.confirmPassword) {
-      alert("两次输入的密码不一致");
+      securitySettingsErrorMessage.value = "两次输入的密码不一致";
       return;
     }
   }
+
+  securitySettingsErrorMessage.value = "";
+  securitySettingsLoading.value = true;
 
   try {
     // 如果有邮箱或密码修改，才调用API
@@ -430,16 +478,24 @@ const saveSecuritySettings = async () => {
         localStorage.setItem("user", JSON.stringify(user));
       }
 
-      closeSecuritySettings();
-      alert("修改成功");
+      securitySettingsSuccessMessage.value = "修改成功";
+      // 2秒后关闭弹窗
+      setTimeout(() => {
+        closeSecuritySettings();
+      }, 2000);
     } else {
       // 没有修改任何内容
-      closeSecuritySettings();
-      alert("没有修改任何内容");
+      securitySettingsSuccessMessage.value = "没有修改任何内容";
+      // 2秒后关闭弹窗
+      setTimeout(() => {
+        closeSecuritySettings();
+      }, 2000);
     }
   } catch (error) {
     console.error("修改失败:", error);
-    alert("修改失败: " + (error as any).response?.data || "未知错误");
+    securitySettingsErrorMessage.value = "修改失败: " + (error as any).response?.data || "未知错误";
+  } finally {
+    securitySettingsLoading.value = false;
   }
 };
 </script>
