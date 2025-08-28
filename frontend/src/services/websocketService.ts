@@ -2,6 +2,7 @@ import { useChatStore } from '../store/chatStore'
 import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 import type { IMessage } from '@stomp/stompjs'
+import { flashBrowserTab, stopTabFlashing } from '../utils/tabFlashUtil'
 
 export class WebSocketService {
   private stompClient: Client | null = null
@@ -163,6 +164,11 @@ export class WebSocketService {
               const updatedUsers = [...chatStore.users];
               updatedUsers[userIndex].unreadCount = unreadCount;
               chatStore.users = updatedUsers;
+              
+              // 如果有未读消息，触发浏览器标签页闪烁
+              if (unreadCount > 0) {
+                flashBrowserTab();
+              }
             }
           });
           
@@ -457,6 +463,9 @@ export class WebSocketService {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    
+    // 停止标签页闪烁
+    stopTabFlashing();
   }
 }
 
