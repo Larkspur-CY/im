@@ -143,12 +143,18 @@ export class WebSocketService {
           this.stompClient?.subscribe('/topic/online-users', (message: IMessage) => {
             const data = JSON.parse(message.body);
             const chatStore = useChatStore();
-            const onlineUserIds = new Set(data.content.map((user: any) => user.id));
-            const updatedUsers = chatStore.users.map(user => ({
-              ...user,
-              status: onlineUserIds.has(user.id) ? 'online' : 'offline'
-            }));
-            chatStore.users = updatedUsers;
+            
+            // 确保data是一个数组
+            if (Array.isArray(data)) {
+              const onlineUserIds = new Set(data.map((user: any) => user.id));
+              const updatedUsers = chatStore.users.map(user => ({
+                ...user,
+                status: onlineUserIds.has(user.id) ? 'online' : 'offline'
+              }));
+              chatStore.users = updatedUsers;
+            } else {
+              console.error('收到的在线用户数据格式不正确:', data);
+            }
           });
           
           // 订阅错误消息队列

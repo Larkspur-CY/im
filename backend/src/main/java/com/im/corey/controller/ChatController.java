@@ -206,18 +206,11 @@ public class ChatController {
         // 将经过认证的用户ID存储到会话中
         Objects.requireNonNull(headerAccessor.getSessionAttributes()).put("userId", userId);
 
-        // 创建消息对象
-        Message message = new Message();
-        message.setSenderId(userId);
-        message.setType(Message.MessageType.TEXT);
-        message.setContent("用户 " + userId + " 已上线");
-        message.setSentTime(LocalDateTime.now());
-
-        // 广播用户上线消息
-        messagingTemplate.convertAndSend("/topic/public", message);
-
         // 更新用户在线状态
         userService.setUserOnline(userId, true);
+        
+        // 通知所有用户在线状态变更
+        notifyOnlineUsers();
     }
 
     /**
