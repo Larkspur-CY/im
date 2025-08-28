@@ -96,6 +96,9 @@ mvn clean compile
 mvn spring-boot:run
 ```
 
+### 更多开发指南
+有关更详细的开发指南，请参阅[后端开发文档](DEVELOPMENT.md)。
+
 ### 测试接口
 
 #### 用户注册

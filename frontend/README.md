@@ -95,6 +95,9 @@ npm run build
 npm run type-check
 ```
 
+### 更多开发指南
+有关更详细的开发指南，请参阅[前端开发文档](DEVELOPMENT.md)。
+
 ## 功能特性
 
 - 用户注册/登录
