@@ -56,9 +56,11 @@
           />
         </div>
         
-        <div v-if="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
+        <Notification 
+          v-if="errorMessage" 
+          :message="errorMessage" 
+          type="error" 
+        />
         
         <button 
           class="register-button" 
@@ -81,6 +83,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '../services/authService'
 import '../assets/register.css'
+import Notification from '../components/Notification.vue'
 
 const router = useRouter()
 

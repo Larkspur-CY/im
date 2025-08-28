@@ -254,29 +254,6 @@
   text-decoration: underline;
 }
 
-/* 错误和成功消息样式 */
-.error-message {
-  color: #ff4757;
-  font-size: 14px;
-  margin-bottom: 15px;
-  text-align: left;
-  background-color: rgba(255, 71, 87, 0.1);
-  padding: 8px;
-  border-radius: 4px;
-  border-left: 3px solid #ff4757;
-}
-
-.success-message {
-  color: #28a745;
-  font-size: 14px;
-  margin-bottom: 15px;
-  text-align: left;
-  background-color: rgba(40, 167, 69, 0.1);
-  padding: 8px;
-  border-radius: 4px;
-  border-left: 3px solid #28a745;
-}
-
 /* 模态框内的表单组样式 */
 .modal-form-group {
   margin-bottom: 20px;

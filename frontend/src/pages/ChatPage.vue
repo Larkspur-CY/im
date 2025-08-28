@@ -10,6 +10,11 @@
       <div class="chat-header" v-if="chatStore.selectedUser">
         <h3>{{ chatStore.selectedUser.username }}</h3>
       </div>
+      <Notification 
+        v-if="websocketErrorMessage" 
+        :message="websocketErrorMessage" 
+        type="error" 
+      />
       <MessageList :messages="chatStore.messages" />
       <MessageInput 
         :selected-user="chatStore.selectedUser" 
@@ -20,17 +25,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import UserList from '../components/chat/UserList.vue'
 import MessageList from '../components/chat/MessageList.vue'
 import MessageInput from '../components/chat/MessageInput.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
+import Notification from '../components/Notification.vue'
 import { useChatStore } from '../store/chatStore'
 import { websocketService } from '../services/websocketService'
 import type { Message } from '../services/apiService'
 import '../assets/chat.css'
 
 const chatStore = useChatStore()
+const websocketErrorMessage = ref('')
 
 // 导入路由和认证服务
 import { authService } from '../services/authService'
@@ -64,6 +71,14 @@ const handleWebSocketError = (event: CustomEvent) => {
   const errorData = event.detail;
   console.error('WebSocket错误:', errorData);
   
+  // 设置全局WebSocket错误消息
+  websocketErrorMessage.value = `WebSocket错误: ${errorData.message}`;
+  
+  // 3秒后清除错误消息
+  setTimeout(() => {
+    websocketErrorMessage.value = '';
+  }, 3000);
+  
   // 查找最后发送的消息并标记为错误
   const messages = chatStore.messages;
   if (messages.length > 0) {
@@ -83,9 +98,6 @@ const handleWebSocketError = (event: CustomEvent) => {
       }
     }
   }
-  
-  // 显示错误通知给用户
-  console.error(`消息发送失败: ${errorData.message}`);
 };
 
 const handleSendMessage = async (messageText: string) => {
@@ -131,6 +143,14 @@ const handleSendMessage = async (messageText: string) => {
             errorMessage: "消息发送超时，请检查网络连接"
           };
           chatStore.messages = updatedMessages;
+          
+          // 显示错误通知
+          websocketErrorMessage.value = '消息发送超时，请检查网络连接';
+          
+          // 3秒后清除错误消息
+          setTimeout(() => {
+            websocketErrorMessage.value = '';
+          }, 3000);
         }
       }, 10000); // 10秒超时
     } catch (error) {
@@ -147,6 +167,14 @@ const handleSendMessage = async (messageText: string) => {
         };
         chatStore.messages = updatedMessages;
       }
+      
+      // 显示错误通知
+      websocketErrorMessage.value = '消息发送失败: ' + (error as Error).message;
+      
+      // 3秒后清除错误消息
+      setTimeout(() => {
+        websocketErrorMessage.value = '';
+      }, 3000);
     }
   }
 }
@@ -194,6 +222,14 @@ const retryMessage = (messageId: number) => {
             errorMessage: "消息发送超时，请检查网络连接"
           };
           chatStore.messages = updatedMsgs;
+          
+          // 显示错误通知
+          websocketErrorMessage.value = '消息发送超时，请检查网络连接';
+          
+          // 3秒后清除错误消息
+          setTimeout(() => {
+            websocketErrorMessage.value = '';
+          }, 3000);
         }
       }, 10000); // 10秒超时
     } catch (error) {
@@ -210,6 +246,14 @@ const retryMessage = (messageId: number) => {
         };
         chatStore.messages = updatedMsgs;
       }
+      
+      // 显示错误通知
+      websocketErrorMessage.value = '消息重试失败: ' + (error as Error).message;
+      
+      // 3秒后清除错误消息
+      setTimeout(() => {
+        websocketErrorMessage.value = '';
+      }, 3000);
     }
   }
 }

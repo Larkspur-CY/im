@@ -30,9 +30,11 @@
           />
         </div>
 
-        <div v-if="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
+        <Notification 
+          v-if="errorMessage" 
+          :message="errorMessage" 
+          type="error" 
+        />
 
         <div class="form-options">
           <div class="remember-me">
@@ -110,12 +112,16 @@
           </div>
         </div>
 
-        <div v-if="resetErrorMessage" class="error-message">
-          {{ resetErrorMessage }}
-        </div>
-        <div v-if="resetSuccessMessage" class="success-message">
-          {{ resetSuccessMessage }}
-        </div>
+        <Notification 
+          v-if="resetErrorMessage" 
+          :message="resetErrorMessage" 
+          type="error" 
+        />
+        <Notification 
+          v-if="resetSuccessMessage" 
+          :message="resetSuccessMessage" 
+          type="success" 
+        />
 
         <div class="modal-footer">
           <button
@@ -144,6 +150,7 @@ import { authService } from "../services/authService";
 import { openApi } from "../services/apiService";
 import { initParticles, updateParticleTheme } from "../assets/particles";
 import "../assets/login.css";
+import Notification from "../components/Notification.vue";
 
 const router = useRouter();
 
