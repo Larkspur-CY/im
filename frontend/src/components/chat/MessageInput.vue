@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import '../../assets/message-input.css'
-import { debounce } from '../../components/Notification.vue'
+import { debounce } from '../../utils/debounceUtil'
 
 defineProps<{ selectedUser: User | null }>()
 const emit = defineEmits(['send-message'])

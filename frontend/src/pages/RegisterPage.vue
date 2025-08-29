@@ -83,7 +83,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService } from '../services/authService'
 import '../assets/register.css'
-import Notification, { debounce } from '../components/Notification.vue'
+import Notification from '../components/Notification.vue'
+import { debounce } from '../utils/debounceUtil'
 
 const router = useRouter()
 

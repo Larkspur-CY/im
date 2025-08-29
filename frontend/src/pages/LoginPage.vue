@@ -150,7 +150,8 @@ import { authService } from "../services/authService";
 import { openApi } from "../services/apiService";
 import { initParticles, updateParticleTheme } from "../assets/particles";
 import "../assets/login.css";
-import Notification, { debounce } from "../components/Notification.vue";
+import Notification from "../components/Notification.vue";
+import { debounce } from '../utils/debounceUtil'
 
 const router = useRouter();
 
