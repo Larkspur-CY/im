@@ -110,7 +110,7 @@ class Particle {
     this.ctx.restore();
   }
 
-  draw(colorScheme: 'light' | 'dark'): void {
+  draw(_colorScheme: 'light' | 'dark'): void {
     if (this.type === 'heart') {
       this.drawHeart();
     } else {
