@@ -1,11 +1,22 @@
 <template>
-  <div class="login-container">
+  <div class="login-container" :class="{ 'qixi-theme': isQixi }">
     <canvas id="particles-canvas" class="particles-canvas"></canvas>
-    <div class="login-box">
+    
+    <!-- 七夕节装饰元素 -->
+    <div v-if="isQixi" class="qixi-decorations">
+      <div class="qixi-heart qixi-heart-1">💕</div>
+      <div class="qixi-heart qixi-heart-2">💖</div>
+      <div class="qixi-heart qixi-heart-3">💝</div>
+      <div class="qixi-star qixi-star-1">⭐</div>
+      <div class="qixi-star qixi-star-2">✨</div>
+    </div>
+    
+    <div class="login-box" :class="{ 'qixi-theme': isQixi }">
       <div class="login-header">
         <img src="/images/favicon/android-chrome-192x192.png" alt="Logo" class="login-logo" />
         <h2>Corey IM</h2>
-        <p>请登录您的账号</p>
+        <p v-if="!isQixi">请登录您的账号</p>
+        <p v-else class="qixi-greeting">七夕快乐！愿天下有情人终成眷属 💕</p>
       </div>
       <div class="login-form">
         <div class="form-group">
@@ -49,7 +60,7 @@
           >
         </div>
 
-        <button class="login-button" @click="login" :disabled="isLoading">
+        <button class="login-button" :class="{ 'qixi-theme': isQixi }" @click="login" :disabled="isLoading">
           {{ isLoading ? "登录中..." : "登录" }}
         </button>
 
@@ -149,6 +160,8 @@ import { useRouter } from "vue-router";
 import { authService } from "../services/authService";
 import { openApi } from "../services/apiService";
 import { initParticles, updateParticleTheme } from "../assets/particles";
+import { initQixiParticles, updateQixiParticleTheme } from "../assets/qixi-particles";
+import { Lunar } from 'lunar-typescript';
 import "../assets/login.css";
 import Notification from "../components/Notification.vue";
 import { debounce } from '../utils/debounceUtil'
@@ -171,6 +184,9 @@ const confirmPassword = ref("");
 const resetLoading = ref(false);
 const resetErrorMessage = ref("");
 const resetSuccessMessage = ref("");
+
+// 七夕节检测
+const isQixi = ref(false);
 
 const login = debounce(async () => {
   if (!username.value || !password.value) {
@@ -296,8 +312,20 @@ onMounted(() => {
   // 检测当前主题
   const currentTheme = document.documentElement.getAttribute('data-theme') as 'dark' | 'light' | null;
   
-  // 初始化粒子动画
-  initParticles("particles-canvas", 80, currentTheme === 'dark' ? 'dark' : 'light');
+  // 检查是否是七夕节
+  const today = new Date();
+  const lunar = Lunar.fromDate(today);
+  
+  // 七夕节是农历七月初七
+  isQixi.value = (lunar.getMonth() === 7 && lunar.getDay() === 7);
+  
+  if (isQixi.value) {
+    // 七夕节使用专属特效
+    initQixiParticles("particles-canvas", 120, currentTheme === 'dark' ? 'dark' : 'light');
+  } else {
+    // 普通日子使用常规粒子特效
+    initParticles("particles-canvas", 80, currentTheme === 'dark' ? 'dark' : 'light');
+  }
 
   // 监听主题变化
   const observer = new MutationObserver((mutations) => {
@@ -305,7 +333,11 @@ onMounted(() => {
       if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
         const newTheme = document.documentElement.getAttribute('data-theme') as 'dark' | 'light' | null;
         // 更新粒子主题而不是重新初始化
-        updateParticleTheme(newTheme === 'dark' ? 'dark' : 'light');
+        if (isQixi.value) {
+          updateQixiParticleTheme(newTheme === 'dark' ? 'dark' : 'light');
+        } else {
+          updateParticleTheme(newTheme === 'dark' ? 'dark' : 'light');
+        }
       }
     });
   });

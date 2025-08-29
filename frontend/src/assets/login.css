@@ -21,6 +21,20 @@
   z-index: 0;
 }
 
+/* 七夕节专属样式 */
+.login-container.qixi-theme::before {
+  background: radial-gradient(circle, rgba(255, 105, 180, 0.05) 0%, rgba(255, 20, 147, 0.05) 50%, rgba(138, 43, 226, 0.05) 100%);
+  animation: qixi-rotate 40s linear infinite;
+}
+
+@keyframes qixi-rotate {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.1); }
+  50% { transform: rotate(180deg) scale(1); }
+  75% { transform: rotate(270deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
 @keyframes rotate {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -51,6 +65,18 @@
 
 .login-box:hover {
   transform: translateY(-5px);
+}
+
+/* 七夕节主题的登录框 */
+.login-box.qixi-theme {
+  border: 2px solid rgba(255, 105, 180, 0.3);
+  box-shadow: 0 15px 35px rgba(255, 105, 180, 0.2), 0 0 20px rgba(255, 20, 147, 0.1);
+}
+
+.login-box.qixi-theme:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 105, 180, 0.5);
+  box-shadow: 0 20px 40px rgba(255, 105, 180, 0.3), 0 0 30px rgba(255, 20, 147, 0.2);
 }
 
 .login-header {
@@ -91,6 +117,19 @@
 .login-header p {
   color: var(--text-secondary);
   font-size: 16px;
+}
+
+.qixi-greeting {
+  color: #FF69B4 !important;
+  font-size: 18px !important;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+  animation: qixi-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes qixi-glow {
+  from { text-shadow: 0 0 10px rgba(255, 105, 180, 0.3); }
+  to { text-shadow: 0 0 20px rgba(255, 105, 180, 0.6), 0 0 30px rgba(255, 20, 147, 0.4); }
 }
 
 .form-group {
@@ -207,6 +246,17 @@
 .login-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* 七夕节主题的登录按钮 */
+.login-button.qixi-theme {
+  background: linear-gradient(135deg, #FF69B4 0%, #FF1493 50%, #8A2BE2 100%);
+  box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
+}
+
+.login-button.qixi-theme:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(255, 105, 180, 0.4), 0 0 20px rgba(255, 20, 147, 0.3);
 }
 
 .login-button:active {
@@ -431,4 +481,70 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: 0 4px 10px rgba(102, 126, 234, 0.15);
+}
+
+/* 七夕节装饰元素样式 */
+.qixi-decorations {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.qixi-heart, .qixi-star {
+  position: absolute;
+  font-size: 24px;
+  animation: qixi-float 6s ease-in-out infinite;
+}
+
+.qixi-heart-1 {
+  top: 15%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.qixi-heart-2 {
+  top: 25%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.qixi-heart-3 {
+  bottom: 20%;
+  left: 20%;
+  animation-delay: 4s;
+}
+
+.qixi-star-1 {
+  top: 10%;
+  right: 25%;
+  animation-delay: 1s;
+}
+
+.qixi-star-2 {
+  bottom: 30%;
+  right: 10%;
+  animation-delay: 3s;
+}
+
+@keyframes qixi-float {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg); 
+    opacity: 0.7;
+  }
+  25% { 
+    transform: translateY(-20px) rotate(5deg); 
+    opacity: 1;
+  }
+  50% { 
+    transform: translateY(-10px) rotate(-5deg); 
+    opacity: 0.8;
+  }
+  75% { 
+    transform: translateY(-15px) rotate(3deg); 
+    opacity: 0.9;
+  }
 }
